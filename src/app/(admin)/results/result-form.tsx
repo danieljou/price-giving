@@ -133,167 +133,213 @@ export function ResultForm({
     <form
       onSubmit={handleSubmit(onSubmit)}
       noValidate
-      className="flex flex-col gap-4"
+      className="flex flex-col gap-8"
     >
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="student_id">Étudiant</Label>
-        <Controller
-          name="student_id"
-          control={control}
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger id="student_id" aria-invalid={!!errors.student_id}>
-                <SelectValue placeholder="Choisir..." />
-              </SelectTrigger>
-              <SelectContent>
-                {students.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.last_name} {s.first_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        {errors.student_id && (
-          <p className="text-sm text-destructive">
-            {errors.student_id.message}
+      <fieldset className="flex flex-col gap-4">
+        <legend className="mb-3 text-sm font-semibold text-foreground">
+          Contexte
+        </legend>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="student_id">Étudiant</Label>
+            <Controller
+              name="student_id"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger
+                    id="student_id"
+                    className="w-full"
+                    aria-invalid={!!errors.student_id}
+                  >
+                    <SelectValue placeholder="Choisir un étudiant" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {students.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.last_name} {s.first_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.student_id && (
+              <p className="text-sm text-destructive">
+                {errors.student_id.message}
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="school_year_id">Année scolaire</Label>
+            <Controller
+              name="school_year_id"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger
+                    id="school_year_id"
+                    className="w-full"
+                    aria-invalid={!!errors.school_year_id}
+                  >
+                    <SelectValue placeholder="Choisir une année" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {schoolYears.map((y) => (
+                      <SelectItem key={y.id} value={y.id}>
+                        {y.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.school_year_id && (
+              <p className="text-sm text-destructive">
+                {errors.school_year_id.message}
+              </p>
+            )}
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset className="flex flex-col gap-4">
+        <legend className="mb-3 text-sm font-semibold text-foreground">
+          Parcours scolaire
+        </legend>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="section">Section</Label>
+            <Controller
+              name="section"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger
+                    id="section"
+                    className="w-full"
+                    aria-invalid={!!errors.section}
+                  >
+                    <SelectValue placeholder="Choisir" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="francophone">Francophone</SelectItem>
+                    <SelectItem value="anglophone">Anglophone</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.section && (
+              <p className="text-sm text-destructive">
+                {errors.section.message}
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="niveau_depart">Niveau de départ</Label>
+            <Controller
+              name="niveau_depart"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger
+                    id="niveau_depart"
+                    className="w-full"
+                    aria-invalid={!!errors.niveau_depart}
+                  >
+                    <SelectValue placeholder="Choisir" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {niveauOptions.map((n) => (
+                      <SelectItem key={n.code} value={n.code}>
+                        {n.code}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.niveau_depart && (
+              <p className="text-sm text-destructive">
+                {errors.niveau_depart.message}
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="niveau_admission">Niveau d&apos;admission</Label>
+            <Controller
+              name="niveau_admission"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  value={field.value ?? ""}
+                  onValueChange={(v) => field.onChange(v)}
+                >
+                  <SelectTrigger id="niveau_admission" className="w-full">
+                    <SelectValue placeholder="Aucun (optionnel)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {niveauOptions.map((n) => (
+                      <SelectItem key={n.code} value={n.code}>
+                        {n.code}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+        </div>
+        {!section && (
+          <p className="text-xs text-muted-foreground">
+            Choisissez d&apos;abord un étudiant ou une section pour voir les
+            niveaux correspondants.
           </p>
         )}
-      </div>
+      </fieldset>
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="school_year_id">Année scolaire</Label>
-        <Controller
-          name="school_year_id"
-          control={control}
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger
-                id="school_year_id"
-                aria-invalid={!!errors.school_year_id}
-              >
-                <SelectValue placeholder="Choisir..." />
-              </SelectTrigger>
-              <SelectContent>
-                {schoolYears.map((y) => (
-                  <SelectItem key={y.id} value={y.id}>
-                    {y.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        {errors.school_year_id && (
-          <p className="text-sm text-destructive">
-            {errors.school_year_id.message}
-          </p>
-        )}
-      </div>
+      <fieldset className="flex flex-col gap-4">
+        <legend className="mb-3 text-sm font-semibold text-foreground">
+          Performance
+        </legend>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="moyenne">Moyenne (/20)</Label>
+            <Input
+              id="moyenne"
+              type="number"
+              step="0.01"
+              min={0}
+              max={20}
+              placeholder="ex. 15,50"
+              aria-invalid={!!errors.moyenne}
+              {...register("moyenne")}
+            />
+            {errors.moyenne && (
+              <p className="text-sm text-destructive">
+                {errors.moyenne.message}
+              </p>
+            )}
+          </div>
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="section">Section</Label>
-        <Controller
-          name="section"
-          control={control}
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger id="section" aria-invalid={!!errors.section}>
-                <SelectValue placeholder="Choisir..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="francophone">Francophone</SelectItem>
-                <SelectItem value="anglophone">Anglophone</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        />
-        {errors.section && (
-          <p className="text-sm text-destructive">{errors.section.message}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="niveau_depart">Niveau de départ</Label>
-        <Controller
-          name="niveau_depart"
-          control={control}
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger
-                id="niveau_depart"
-                aria-invalid={!!errors.niveau_depart}
-              >
-                <SelectValue placeholder="Choisir..." />
-              </SelectTrigger>
-              <SelectContent>
-                {niveauOptions.map((n) => (
-                  <SelectItem key={n.code} value={n.code}>
-                    {n.code}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        {errors.niveau_depart && (
-          <p className="text-sm text-destructive">
-            {errors.niveau_depart.message}
-          </p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="niveau_admission">
-          Niveau d&apos;admission (optionnel)
-        </Label>
-        <Controller
-          name="niveau_admission"
-          control={control}
-          render={({ field }) => (
-            <Select
-              value={field.value ?? ""}
-              onValueChange={(v) => field.onChange(v)}
-            >
-              <SelectTrigger id="niveau_admission">
-                <SelectValue placeholder="Aucun" />
-              </SelectTrigger>
-              <SelectContent>
-                {niveauOptions.map((n) => (
-                  <SelectItem key={n.code} value={n.code}>
-                    {n.code}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="moyenne">Moyenne (/20)</Label>
-        <Input
-          id="moyenne"
-          type="number"
-          step="0.01"
-          min={0}
-          max={20}
-          aria-invalid={!!errors.moyenne}
-          {...register("moyenne")}
-        />
-        {errors.moyenne && (
-          <p className="text-sm text-destructive">{errors.moyenne.message}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="rang">Rang (optionnel)</Label>
-        <Input id="rang" type="number" min={1} {...register("rang")} />
-        {errors.rang && (
-          <p className="text-sm text-destructive">{errors.rang.message}</p>
-        )}
-      </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="rang">Rang (optionnel)</Label>
+            <Input
+              id="rang"
+              type="number"
+              min={1}
+              placeholder="ex. 3"
+              {...register("rang")}
+            />
+            {errors.rang && (
+              <p className="text-sm text-destructive">{errors.rang.message}</p>
+            )}
+          </div>
+        </div>
+      </fieldset>
 
       {serverError && (
         <Alert variant="destructive">
@@ -318,9 +364,15 @@ export function ResultForm({
         </Alert>
       )}
 
-      <Button type="submit" disabled={isPending} className="mt-2">
-        {isPending ? "Enregistrement..." : submitLabel}
-      </Button>
+      <div className="flex justify-end border-t border-border pt-4">
+        <Button
+          type="submit"
+          disabled={isPending}
+          className="w-full sm:w-auto sm:min-w-40"
+        >
+          {isPending ? "Enregistrement..." : submitLabel}
+        </Button>
+      </div>
     </form>
   );
 }

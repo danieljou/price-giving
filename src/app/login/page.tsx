@@ -45,16 +45,49 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-muted/40 px-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <div className="mb-2 flex size-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
+    <div className="grid min-h-svh flex-1 lg:grid-cols-2">
+      {/* Brand panel — desktop only */}
+      <div className="relative hidden flex-col justify-between overflow-hidden bg-primary p-10 text-primary-foreground lg:flex">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgb(255_255_255/0.14),transparent_55%),radial-gradient(ellipse_at_bottom_right,rgb(0_0_0/0.25),transparent_60%)]"
+        />
+        <div className="relative flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-lg bg-white/15 backdrop-blur-sm">
             <GraduationCap className="size-5" aria-hidden="true" />
           </div>
-          <CardTitle>PRICE GIVING — Classification des prix</CardTitle>
-          <CardDescription>Connexion administrateur</CardDescription>
-        </CardHeader>
-        <CardContent>
+          <span className="text-lg font-semibold tracking-tight">
+            PRICE GIVING
+          </span>
+        </div>
+        <div className="relative max-w-md">
+          <h2 className="text-3xl font-semibold leading-tight tracking-tight">
+            Récompenser l&apos;excellence, année après année.
+          </h2>
+          <p className="mt-4 text-sm leading-relaxed text-primary-foreground/75">
+            Classification automatique des lauréats — Prix Spécial, Excellence,
+            Encouragement et Excellence+ — sur la base des critères officiels,
+            pour les sections francophone et anglophone.
+          </p>
+        </div>
+        <p className="relative text-xs text-primary-foreground/60">
+          Espace réservé aux administrateurs
+        </p>
+      </div>
+
+      {/* Form panel */}
+      <div className="flex items-center justify-center px-4 py-12">
+        <Card className="w-full max-w-sm border-0 shadow-none lg:border lg:shadow-sm">
+          <CardHeader>
+            <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground lg:hidden">
+              <GraduationCap className="size-5" aria-hidden="true" />
+            </div>
+            <CardTitle className="text-xl">Bon retour</CardTitle>
+            <CardDescription>
+              Connectez-vous à votre espace administrateur
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
           <form
             onSubmit={handleSubmit(onSubmit)}
             noValidate
@@ -108,7 +141,8 @@ export default function LoginPage() {
             </Button>
           </form>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }

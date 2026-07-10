@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PageHeader } from "@/components/page-header";
 import { recomputeYear } from "../results/actions";
 import { laureateColumns, type LaureateRow } from "./columns";
 import { ExportMenu } from "./export-menu";
@@ -115,20 +116,20 @@ export default async function LaureatesPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold text-foreground">Lauréats</h1>
-        <div className="flex items-center gap-2">
-          {recomputeCurrentYear && (
-            <form action={recomputeCurrentYear}>
-              <Button type="submit" variant="ghost" size="sm">
-                <RefreshCw />
-                Recalculer cette année
-              </Button>
-            </form>
-          )}
-          <ExportMenu rows={rows} scopeLabel={scopeLabel} />
-        </div>
-      </div>
+      <PageHeader
+        title="Lauréats"
+        description={`${rows.length} lauréat${rows.length > 1 ? "s" : ""} pour les filtres actuels`}
+      >
+        {recomputeCurrentYear && (
+          <form action={recomputeCurrentYear}>
+            <Button type="submit" variant="ghost" size="sm">
+              <RefreshCw />
+              Recalculer cette année
+            </Button>
+          </form>
+        )}
+        <ExportMenu rows={rows} scopeLabel={scopeLabel} />
+      </PageHeader>
 
       <form method="GET" className="flex flex-wrap items-end gap-3">
         <Select name="year" defaultValue={filters.year ?? ""}>

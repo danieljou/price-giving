@@ -11,7 +11,7 @@ export function BottomTabBar() {
   return (
     <nav
       aria-label="Navigation principale"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
     >
       <ul className="grid grid-cols-4">
         {TAB_ITEMS.map((item) => {
@@ -24,13 +24,22 @@ export function BottomTabBar() {
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors",
+                  "group flex min-h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",
                   isActive
                     ? "text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <item.icon className="size-5" aria-hidden="true" />
+                <span
+                  className={cn(
+                    "flex h-7 w-12 items-center justify-center rounded-full transition-colors",
+                    isActive
+                      ? "bg-primary/12"
+                      : "group-active:bg-muted"
+                  )}
+                >
+                  <item.icon className="size-5" aria-hidden="true" />
+                </span>
                 {item.label}
               </Link>
             </li>

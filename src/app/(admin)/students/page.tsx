@@ -3,6 +3,7 @@ import { UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/data-table";
+import { PageHeader } from "@/components/page-header";
 import { studentColumns } from "./columns";
 
 export default async function StudentsPage() {
@@ -14,15 +15,17 @@ export default async function StudentsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-foreground">Étudiants</h1>
+      <PageHeader
+        title="Étudiants"
+        description={`${students?.length ?? 0} étudiant${(students?.length ?? 0) > 1 ? "s" : ""} enregistré${(students?.length ?? 0) > 1 ? "s" : ""}`}
+      >
         <Button asChild>
           <Link href="/students/new">
             <UserPlus />
             Nouvel étudiant
           </Link>
         </Button>
-      </div>
+      </PageHeader>
 
       <DataTable
         columns={studentColumns}

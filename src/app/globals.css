@@ -126,8 +126,44 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "tnum" 1;
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 20%, transparent);
+  }
+  /* Visible, consistent keyboard focus everywhere */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Soft elevated card look shared by Card-based surfaces */
+  [data-slot="card"] {
+    box-shadow:
+      0 1px 2px rgb(15 23 42 / 0.04),
+      0 1px 3px rgb(15 23 42 / 0.06);
+    transition: box-shadow 200ms ease;
+  }
+  [data-slot="card"]:hover {
+    box-shadow:
+      0 2px 4px rgb(15 23 42 / 0.05),
+      0 4px 12px rgb(15 23 42 / 0.08);
   }
 }

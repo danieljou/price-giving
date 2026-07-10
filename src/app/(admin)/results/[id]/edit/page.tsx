@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
 import { updateResult } from "../../actions";
 import { ResultForm } from "../../result-form";
 
@@ -38,11 +39,12 @@ export default async function EditResultPage({
   const boundUpdateResult = updateResult.bind(null, result.id);
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+      <PageHeader
+        title="Modifier le résultat"
+        description="Le prix sera recalculé automatiquement à la mise à jour"
+      />
       <Card>
-        <CardHeader>
-          <CardTitle>Modifier le résultat</CardTitle>
-        </CardHeader>
         <CardContent>
           <ResultForm
             action={boundUpdateResult}

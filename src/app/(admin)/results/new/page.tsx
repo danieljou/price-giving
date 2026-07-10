@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
 import { createResult } from "../actions";
 import { ResultForm } from "../result-form";
 
@@ -25,11 +26,12 @@ export default async function NewResultPage({
     ]);
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+      <PageHeader
+        title="Saisir un résultat"
+        description="Le prix est calculé automatiquement à l'enregistrement selon les critères officiels"
+      />
       <Card>
-        <CardHeader>
-          <CardTitle>Saisir un résultat</CardTitle>
-        </CardHeader>
         <CardContent>
           <ResultForm
             action={createResult}
