@@ -1,0 +1,304 @@
+{
+  "criteres_selection_laureats_prix": {
+    "organisation": "JEVIC",
+    "sections": ["francophone", "anglophone"],
+    "prix": {
+      "PRIX_SPECIAL": {
+        "code": "SPECIAL",
+        "criteres": [
+          {
+            "niveau_depart": {
+              "francophone": "JARDIN",
+              "anglophone": "JARDIN"
+            },
+            "niveau_admission": {
+              "francophone": "JARDIN",
+              "anglophone": "JARDIN"
+            },
+            "intervalle_moyenne": null,
+            "prix": "SPECIAL"
+          },
+          {
+            "niveau_depart": {
+              "francophone": "JARDIN",
+              "anglophone": "JARDIN"
+            },
+            "niveau_admission": {
+              "francophone": "SIL",
+              "anglophone": "CLASS 1"
+            },
+            "intervalle_moyenne": null,
+            "prix": "SPECIAL"
+          },
+          {
+            "niveau_depart": {
+              "francophone": "JARDIN",
+              "anglophone": "JARDIN"
+            },
+            "niveau_admission": { "francophone": "CPS", "anglophone": "CPS" },
+            "intervalle_moyenne": null,
+            "prix": "SPECIAL"
+          }
+        ]
+      },
+      "PRIX_EXCELLENCE": {
+        "code": "EXC",
+        "criteres": [
+          {
+            "niveau_depart": { "francophone": "SIL", "anglophone": "CLASS 1" },
+            "niveau_admission": {
+              "francophone": "CP",
+              "anglophone": "CLASS 2"
+            },
+            "intervalle_moyenne": "MOYENNE >= 16/20",
+            "prix": "EXC"
+          },
+          {
+            "niveau_depart": { "francophone": "CP", "anglophone": "CLASS 2" },
+            "niveau_admission": {
+              "francophone": "CE1",
+              "anglophone": "CLASS 3"
+            },
+            "intervalle_moyenne": "MOYENNE >= 16/20",
+            "prix": "EXC"
+          },
+          {
+            "niveau_depart": { "francophone": "CE1", "anglophone": "CLASS 3" },
+            "niveau_admission": {
+              "francophone": "CE2",
+              "anglophone": "CLASS 4"
+            },
+            "intervalle_moyenne": "MOYENNE >= 16/20",
+            "prix": "EXC"
+          },
+          {
+            "niveau_depart": { "francophone": "CE2", "anglophone": "CLASS 4" },
+            "niveau_admission": {
+              "francophone": "CM1",
+              "anglophone": "CLASS 5"
+            },
+            "intervalle_moyenne": "MOYENNE >= 16/20",
+            "prix": "EXC"
+          },
+          {
+            "niveau_depart": { "francophone": "CEP", "anglophone": null },
+            "niveau_admission": { "francophone": "CM1", "anglophone": null },
+            "intervalle_moyenne": "Bonne moyenne pour CM2 (RANG <= 5eme)",
+            "prix": "EXC"
+          },
+          {
+            "niveau_depart": { "francophone": "CM1", "anglophone": "CLASS 5" },
+            "niveau_admission": {
+              "francophone": "CM2",
+              "anglophone": "CLASS 6"
+            },
+            "intervalle_moyenne": "MOYENNE >= 16/20",
+            "prix": "EXC"
+          },
+          {
+            "niveau_depart": { "francophone": "6e", "anglophone": "FORM 1" },
+            "niveau_admission": { "francophone": "5e", "anglophone": "FORM 2" },
+            "intervalle_moyenne": "MOYENNE >= 15/20",
+            "prix": "EXC"
+          },
+          {
+            "niveau_depart": { "francophone": "5e", "anglophone": "FORM 2" },
+            "niveau_admission": { "francophone": "4e", "anglophone": "FORM 3" },
+            "intervalle_moyenne": "MOYENNE >= 15/20",
+            "prix": "EXC"
+          },
+          {
+            "niveau_depart": { "francophone": "4e", "anglophone": "FORM 3" },
+            "niveau_admission": { "francophone": "3e", "anglophone": "FORM 4" },
+            "intervalle_moyenne": "MOYENNE >= 15/20",
+            "prix": "EXC"
+          },
+          {
+            "niveau_depart": { "francophone": "3e", "anglophone": "FORM 4" },
+            "niveau_admission": {
+              "francophone": "2nd",
+              "anglophone": "FORM 5"
+            },
+            "intervalle_moyenne": "MOYENNE >= 15/20",
+            "prix": "EXC"
+          },
+          {
+            "niveau_depart": { "francophone": "BEPC", "anglophone": null },
+            "niveau_admission": { "francophone": "3e", "anglophone": null },
+            "intervalle_moyenne": "En 4e avec MOYENNE >= 13/20 pour la 3e",
+            "prix": "EXC"
+          },
+          {
+            "niveau_depart": { "francophone": "2nd", "anglophone": "FORM 5" },
+            "niveau_admission": {
+              "francophone": "1ere",
+              "anglophone": "LOWER 6"
+            },
+            "intervalle_moyenne": "MOYENNE >= 14/20",
+            "prix": "EXC"
+          },
+          {
+            "niveau_depart": { "francophone": "1ere", "anglophone": "LOWER 6" },
+            "niveau_admission": {
+              "francophone": "Tle",
+              "anglophone": "UPPER 6"
+            },
+            "intervalle_moyenne": "PROBATOIRE + MOYENNE >= 13/20",
+            "prix": "EXC"
+          },
+          {
+            "niveau_depart": {
+              "francophone": "BACC",
+              "anglophone": "GCE A LEVEL"
+            },
+            "niveau_admission": { "francophone": null, "anglophone": null },
+            "intervalle_moyenne": "AVEC MENTION (MOYENNE >= 12/20)",
+            "prix": "EXC"
+          },
+          {
+            "niveau_depart": {
+              "francophone": "UNIVERSITE",
+              "anglophone": "UNIVERSITY"
+            },
+            "niveau_admission": { "francophone": null, "anglophone": null },
+            "intervalle_moyenne": "Validation de toutes les matieres en session normale; Concours d'entree dans les grandes ecoles",
+            "prix": "EXC"
+          }
+        ]
+      },
+      "PRIX_ENCOURAGEMENT": {
+        "code": "ENC",
+        "criteres": [
+          {
+            "niveau_depart": { "francophone": "SIL", "anglophone": "CLASS 1" },
+            "niveau_admission": {
+              "francophone": "CP",
+              "anglophone": "CLASS 2"
+            },
+            "intervalle_moyenne": "15/20 <= MOYENNE < 16/20",
+            "prix": "ENC"
+          },
+          {
+            "niveau_depart": { "francophone": "CP", "anglophone": "CLASS 2" },
+            "niveau_admission": {
+              "francophone": "CE1",
+              "anglophone": "CLASS 3"
+            },
+            "intervalle_moyenne": "14/20 <= MOYENNE < 16/20",
+            "prix": "ENC"
+          },
+          {
+            "niveau_depart": { "francophone": "CE1", "anglophone": "CLASS 3" },
+            "niveau_admission": {
+              "francophone": "CE2",
+              "anglophone": "CLASS 4"
+            },
+            "intervalle_moyenne": "14/20 <= MOYENNE < 16/20",
+            "prix": "ENC"
+          },
+          {
+            "niveau_depart": { "francophone": "CE2", "anglophone": "CLASS 4" },
+            "niveau_admission": {
+              "francophone": "CM1",
+              "anglophone": "CLASS 5"
+            },
+            "intervalle_moyenne": "14/20 <= MOYENNE < 16/20",
+            "prix": "ENC"
+          },
+          {
+            "niveau_depart": { "francophone": "CM1", "anglophone": "CLASS 5" },
+            "niveau_admission": {
+              "francophone": "CM2",
+              "anglophone": "CLASS 6"
+            },
+            "intervalle_moyenne": "14/20 <= MOYENNE < 16/20",
+            "prix": "ENC"
+          },
+          {
+            "niveau_depart": { "francophone": "CEP", "anglophone": null },
+            "niveau_admission": {
+              "francophone": "CM2",
+              "anglophone": "CLASS 6"
+            },
+            "intervalle_moyenne": null,
+            "prix": "ENC"
+          },
+          {
+            "niveau_depart": { "francophone": "6e", "anglophone": "FORM 1" },
+            "niveau_admission": { "francophone": "5e", "anglophone": "FORM 2" },
+            "intervalle_moyenne": "13/20 <= MOYENNE < 14/20",
+            "prix": "ENC"
+          },
+          {
+            "niveau_depart": { "francophone": "5e", "anglophone": "FORM 2" },
+            "niveau_admission": { "francophone": "4e", "anglophone": "FORM 3" },
+            "intervalle_moyenne": "13/20 <= MOYENNE < 14/20",
+            "prix": "ENC"
+          },
+          {
+            "niveau_depart": { "francophone": "4e", "anglophone": "FORM 3" },
+            "niveau_admission": { "francophone": "3e", "anglophone": "FORM 4" },
+            "intervalle_moyenne": "13/20 <= MOYENNE < 14/20",
+            "prix": "ENC"
+          },
+          {
+            "niveau_depart": {
+              "francophone": "BEPC / CAP",
+              "anglophone": "GCE O LEVEL"
+            },
+            "niveau_admission": {
+              "francophone": "3e / 4e Annee",
+              "anglophone": "FORM 4"
+            },
+            "intervalle_moyenne": null,
+            "prix": "ENC"
+          },
+          {
+            "niveau_depart": { "francophone": "2nd", "anglophone": "FORM 5" },
+            "niveau_admission": {
+              "francophone": "1ere",
+              "anglophone": "LOWER 6"
+            },
+            "intervalle_moyenne": "13/20 <= MOYENNE < 14/20 ou bien MOYENNE >= 12/20 avec rang <= 5e",
+            "prix": "ENC"
+          },
+          {
+            "niveau_depart": {
+              "francophone": "PROBATOIRE",
+              "anglophone": null
+            },
+            "niveau_admission": { "francophone": null, "anglophone": null },
+            "intervalle_moyenne": null,
+            "prix": "ENC"
+          },
+          {
+            "niveau_depart": {
+              "francophone": "BACCALAUREAT",
+              "anglophone": "GCE A LEVEL"
+            },
+            "niveau_admission": { "francophone": null, "anglophone": null },
+            "intervalle_moyenne": null,
+            "prix": "ENC"
+          },
+          {
+            "niveau_depart": {
+              "francophone": "UNIVERSITE",
+              "anglophone": "UNIVERSITY"
+            },
+            "niveau_admission": { "francophone": null, "anglophone": null },
+            "intervalle_moyenne": "Moins 2 matieres sur les 100%; Tous les diplomes; Formation professionnelle et grandes ecoles; Jeunes travailleurs",
+            "prix": "ENC"
+          }
+        ]
+      },
+      "PRIX_EXCELLENCE_PLUS": {
+        "code": "EXC_PLUS",
+        "criteres": [
+          {
+            "condition": "Avoir obtenu le prix d'excellence durant deux annees consecutives : l'annee derniere et cette annee."
+          }
+        ]
+      }
+    }
+  }
+}
