@@ -1,0 +1,183 @@
+import Link from "next/link";
+import { RefreshCw } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DataTable } from "@/components/data-table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { recomputeYear } from "../results/actions";
+import { laureateColumns, type LaureateRow } from "./columns";
+
+const PRIZE_LABELS: Record<string, string> = {
+  SPECIAL: "Prix Spécial",
+  EXC: "Prix d'Excellence",
+  ENC: "Prix d'Encouragement",
+  EXC_PLUS: "Prix d'Excellence+",
+};
+
+interface SchoolYearRow {
+  label: string;
+  start_year: number;
+}
+
+interface StudentRow {
+  first_name: string;
+  last_name: string;
+}
+
+interface ResultRow {
+  id: string;
+  niveau_depart: string;
+  niveau_admission: string | null;
+  moyenne: number;
+  rang: number | null;
+  awarded_prizes: string[];
+  section: string;
+  students: StudentRow | StudentRow[] | null;
+  school_years: SchoolYearRow | SchoolYearRow[] | null;
+}
+
+function one<T>(value: T | T[] | null): T | null {
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+export default async function LaureatesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    year?: string;
+    section?: string;
+    prize?: string;
+    niveau?: string;
+  }>;
+}) {
+  const filters = await searchParams;
+  const supabase = await createClient();
+
+  const { data: schoolYears } = await supabase
+    .from("school_years")
+    .select("id, label, start_year")
+    .order("start_year", { ascending: false });
+
+  let query = supabase
+    .from("results")
+    .select(
+      "id, niveau_depart, niveau_admission, moyenne, rang, awarded_prizes, section, students(first_name, last_name), school_years!inner(label, start_year)"
+    )
+    .not("awarded_prizes", "eq", "{}");
+
+  if (filters.year) query = query.eq("school_year_id", filters.year);
+  if (filters.section === "francophone" || filters.section === "anglophone") {
+    query = query.eq("section", filters.section);
+  }
+  if (filters.niveau) query = query.eq("niveau_depart", filters.niveau);
+  if (filters.prize) query = query.contains("awarded_prizes", [filters.prize]);
+
+  const { data: results } = await query.order("niveau_depart");
+
+  const rows: LaureateRow[] = ((results ?? []) as unknown as ResultRow[]).map(
+    (r) => {
+      const student = one(r.students);
+      const schoolYear = one(r.school_years);
+      return {
+        id: r.id,
+        niveau_depart: r.niveau_depart,
+        niveau_admission: r.niveau_admission,
+        moyenne: r.moyenne,
+        rang: r.rang,
+        awarded_prizes: r.awarded_prizes,
+        section: r.section,
+        student_name: student
+          ? `${student.last_name} ${student.first_name}`
+          : "—",
+        school_year_label: schoolYear?.label ?? "—",
+      };
+    }
+  );
+
+  const recomputeCurrentYear = filters.year
+    ? async () => {
+        "use server";
+        await recomputeYear(filters.year!);
+      }
+    : undefined;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-foreground">Lauréats</h1>
+        {recomputeCurrentYear && (
+          <form action={recomputeCurrentYear}>
+            <Button type="submit" variant="ghost" size="sm">
+              <RefreshCw />
+              Recalculer cette année
+            </Button>
+          </form>
+        )}
+      </div>
+
+      <form method="GET" className="flex flex-wrap items-end gap-3">
+        <Select name="year" defaultValue={filters.year ?? ""}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Toutes les années" />
+          </SelectTrigger>
+          <SelectContent>
+            {schoolYears?.map((y) => (
+              <SelectItem key={y.id} value={y.id}>
+                {y.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select name="section" defaultValue={filters.section ?? ""}>
+          <SelectTrigger className="w-42.5">
+            <SelectValue placeholder="Toutes les sections" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="francophone">Francophone</SelectItem>
+            <SelectItem value="anglophone">Anglophone</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select name="prize" defaultValue={filters.prize ?? ""}>
+          <SelectTrigger className="w-42.5">
+            <SelectValue placeholder="Tous les prix" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(PRIZE_LABELS).map(([code, label]) => (
+              <SelectItem key={code} value={code}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Input
+          name="niveau"
+          placeholder="Niveau de départ"
+          defaultValue={filters.niveau ?? ""}
+          className="w-45"
+        />
+
+        <Button type="submit">Filtrer</Button>
+        {(filters.year ||
+          filters.section ||
+          filters.prize ||
+          filters.niveau) && (
+          <Button variant="ghost" asChild>
+            <Link href="/laureates">Réinitialiser</Link>
+          </Button>
+        )}
+      </form>
+
+      <DataTable columns={laureateColumns} data={rows} />
+    </div>
+  );
+}
