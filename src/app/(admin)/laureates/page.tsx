@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { recomputeYear } from "../results/actions";
 import { laureateColumns, type LaureateRow } from "./columns";
+import { ExportMenu } from "./export-menu";
 
 const PRIZE_LABELS: Record<string, string> = {
   SPECIAL: "Prix Spécial",
@@ -108,18 +109,25 @@ export default async function LaureatesPage({
       }
     : undefined;
 
+  const scopeLabel = filters.year
+    ? (schoolYears?.find((y) => y.id === filters.year)?.label ?? "filtré")
+    : "toutes-années";
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-lg font-semibold text-foreground">Lauréats</h1>
-        {recomputeCurrentYear && (
-          <form action={recomputeCurrentYear}>
-            <Button type="submit" variant="ghost" size="sm">
-              <RefreshCw />
-              Recalculer cette année
-            </Button>
-          </form>
-        )}
+        <div className="flex items-center gap-2">
+          {recomputeCurrentYear && (
+            <form action={recomputeCurrentYear}>
+              <Button type="submit" variant="ghost" size="sm">
+                <RefreshCw />
+                Recalculer cette année
+              </Button>
+            </form>
+          )}
+          <ExportMenu rows={rows} scopeLabel={scopeLabel} />
+        </div>
       </div>
 
       <form method="GET" className="flex flex-wrap items-end gap-3">
@@ -177,7 +185,20 @@ export default async function LaureatesPage({
         )}
       </form>
 
-      <DataTable columns={laureateColumns} data={rows} />
+      <DataTable
+        columns={laureateColumns}
+        data={rows}
+        emptyContent={
+          <div className="flex flex-col items-center gap-2 py-12 text-center">
+            <p className="text-sm font-medium text-foreground">
+              Aucun lauréat pour ces filtres
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Modifiez les filtres ou saisissez de nouveaux résultats.
+            </p>
+          </div>
+        }
+      />
     </div>
   );
 }

@@ -27,6 +27,16 @@ export default async function StudentsPage() {
       <DataTable
         columns={studentColumns}
         data={students ?? []}
+        emptyContent={
+          <div className="flex flex-col items-center gap-2 py-12 text-center">
+            <p className="text-sm font-medium text-foreground">
+              Aucun étudiant enregistré
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Commencez par créer un étudiant avec le bouton ci-dessus.
+            </p>
+          </div>
+        }
         searchKey="last_name"
         searchPlaceholder="Rechercher un nom..."
         filterFields={[

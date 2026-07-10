@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, TriangleAlert } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -115,9 +116,15 @@ export function ResultForm({
 
     startTransition(async () => {
       const result = await action(formData);
-      if (result?.error) setServerError(result.error);
+      if (result?.error) {
+        setServerError(result.error);
+        toast.error(result.error);
+      }
       if (result?.manualReviewNotes) {
         setManualReviewNotes(result.manualReviewNotes);
+        toast.warning(
+          "Résultat enregistré — certains critères demandent une vérification manuelle."
+        );
       }
     });
   }

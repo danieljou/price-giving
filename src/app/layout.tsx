@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fira_Sans, Fira_Code } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import { I18nProvider } from "@/components/i18n-provider";
 
@@ -36,6 +37,7 @@ export default function RootLayout({
         <I18nProvider>
           <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
         </I18nProvider>
+        <Toaster position="top-right" richColors closeButton />
       </body>
     </html>
   );

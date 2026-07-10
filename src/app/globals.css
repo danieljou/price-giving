@@ -68,11 +68,12 @@
   --border: #e2e8f0;
   --input: #e2e8f0;
   --ring: #1e40af;
-  --chart-1: #1e40af;
-  --chart-2: #3b82f6;
-  --chart-3: #f59e0b;
-  --chart-4: #0ea5e9;
-  --chart-5: #64748b;
+  /* Categorical chart palette — validated (lightness band, chroma, CVD, contrast) */
+  --chart-1: #2563eb;
+  --chart-2: #d97706;
+  --chart-3: #0d9488;
+  --chart-4: #7c3aed;
+  --chart-5: #db2777;
   --radius: 0.625rem;
   --sidebar: #ffffff;
   --sidebar-foreground: #0f172a;
@@ -103,11 +104,12 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: #3b82f6;
+  /* Dark-mode categorical palette — validated against the dark card surface */
   --chart-1: #3b82f6;
-  --chart-2: #60a5fa;
-  --chart-3: #f59e0b;
-  --chart-4: #38bdf8;
-  --chart-5: #94a3b8;
+  --chart-2: #d97706;
+  --chart-3: #0d9488;
+  --chart-4: #8b5cf6;
+  --chart-5: #ec4899;
   --sidebar: #0f172a;
   --sidebar-foreground: #f8fafc;
   --sidebar-primary: #3b82f6;

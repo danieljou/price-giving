@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,8 +35,10 @@ export function SchoolYearForm() {
       const result = await createSchoolYear(formData);
       if (result?.error) {
         setServerError(result.error);
+        toast.error(result.error);
       } else {
         reset();
+        toast.success(`Année scolaire ${values.label} ajoutée.`);
       }
     });
   }
