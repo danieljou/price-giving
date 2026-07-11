@@ -42,3 +42,48 @@ export async function createStudent(
   revalidatePath("/students");
   redirect(`/students/${data.id}`);
 }
+
+export interface QuickCreateStudentState {
+  error?: string;
+  student?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    section: "francophone" | "anglophone";
+  };
+}
+
+/** Inline creation from the result form's student combobox: returns the new
+ *  student instead of redirecting so the caller can select it immediately. */
+export async function quickCreateStudent(
+  formData: FormData
+): Promise<QuickCreateStudentState> {
+  const parsed = studentSchema.safeParse({
+    first_name: formData.get("first_name"),
+    last_name: formData.get("last_name"),
+    section: formData.get("section"),
+    date_of_birth: undefined,
+  });
+
+  if (!parsed.success) {
+    return { error: "Nom, prénom et section sont requis." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("students")
+    .insert({
+      first_name: parsed.data.first_name,
+      last_name: parsed.data.last_name,
+      section: parsed.data.section,
+    })
+    .select("id, first_name, last_name, section")
+    .single();
+
+  if (error || !data) {
+    return { error: "Erreur lors de la création de l'étudiant." };
+  }
+
+  revalidatePath("/students");
+  return { student: data };
+}

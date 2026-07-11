@@ -16,7 +16,7 @@ export default async function EditResultPage({
   const { data: result } = await supabase
     .from("results")
     .select(
-      "id, student_id, school_year_id, section, niveau_depart, niveau_admission, moyenne, rang"
+      "id, student_id, school_year_id, section, niveau_depart, niveau_admission, classe_texte, moyenne, rang"
     )
     .eq("id", id)
     .single();
@@ -57,6 +57,7 @@ export default async function EditResultPage({
               section: result.section,
               niveau_depart: result.niveau_depart,
               niveau_admission: result.niveau_admission ?? undefined,
+              classe_texte: result.classe_texte ?? undefined,
               moyenne: result.moyenne != null ? String(result.moyenne) : "",
               rang: result.rang != null ? String(result.rang) : undefined,
             }}

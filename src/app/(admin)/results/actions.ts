@@ -18,6 +18,7 @@ function parseResultForm(formData: FormData) {
     section: formData.get("section"),
     niveau_depart: formData.get("niveau_depart"),
     niveau_admission: formData.get("niveau_admission"),
+    classe_texte: formData.get("classe_texte") ?? undefined,
     moyenne: formData.get("moyenne"),
     rang: formData.get("rang"),
   });
@@ -32,6 +33,7 @@ function parseResultForm(formData: FormData) {
     section: parsed.data.section,
     niveauDepart: parsed.data.niveau_depart,
     niveauAdmission: parsed.data.niveau_admission || null,
+    classeTexte: parsed.data.classe_texte?.trim() || null,
     moyenne: Number(parsed.data.moyenne),
     rang: parsed.data.rang ? Number(parsed.data.rang) : null,
   };
@@ -53,6 +55,7 @@ export async function createResult(
     section: parsed.section,
     niveau_depart: parsed.niveauDepart,
     niveau_admission: parsed.niveauAdmission,
+    classe_texte: parsed.classeTexte,
     moyenne: parsed.moyenne,
     rang: parsed.rang,
     awarded_prizes,
@@ -98,6 +101,7 @@ export async function updateResult(
       section: parsed.section,
       niveau_depart: parsed.niveauDepart,
       niveau_admission: parsed.niveauAdmission,
+      classe_texte: parsed.classeTexte,
       moyenne: parsed.moyenne,
       rang: parsed.rang,
       awarded_prizes,

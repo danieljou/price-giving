@@ -15,12 +15,22 @@ export interface LaureateRow {
   id: string;
   niveau_depart: string;
   niveau_admission: string | null;
+  /** Free-text transition as written on the official list (e.g. "6e M1 → 5e M1"). */
+  classe_texte: string | null;
   moyenne: number | null;
   rang: number | null;
   awarded_prizes: string[];
   section: string;
   student_name: string;
   school_year_label: string;
+}
+
+/** Display transition: the admin's free text wins over the normalized codes. */
+export function classeDisplay(row: LaureateRow): string {
+  return (
+    row.classe_texte ??
+    `${row.niveau_depart} → ${row.niveau_admission ?? "—"}`
+  );
 }
 
 export const laureateColumns: ColumnDef<LaureateRow>[] = [
@@ -50,12 +60,8 @@ export const laureateColumns: ColumnDef<LaureateRow>[] = [
   },
   {
     id: "niveaux",
-    header: "Départ → Admission",
-    cell: ({ row }) => (
-      <span>
-        {row.original.niveau_depart} → {row.original.niveau_admission ?? "—"}
-      </span>
-    ),
+    header: "Classe (départ → arrivée)",
+    cell: ({ row }) => <span>{classeDisplay(row.original)}</span>,
   },
   {
     accessorKey: "moyenne",

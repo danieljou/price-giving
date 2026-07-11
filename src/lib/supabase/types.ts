@@ -99,6 +99,7 @@ export interface Database {
           section: Section;
           niveau_depart: string;
           niveau_admission: string | null;
+          classe_texte: string | null;
           moyenne: number | null;
           rang: number | null;
           awarded_prizes: PrizeCode[];
@@ -113,6 +114,7 @@ export interface Database {
           section: Section;
           niveau_depart: string;
           niveau_admission?: string | null;
+          classe_texte?: string | null;
           moyenne?: number | null;
           rang?: number | null;
           awarded_prizes?: PrizeCode[];

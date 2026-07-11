@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/page-header";
+import { pickDefaultSchoolYear } from "@/lib/school-year";
 import { recomputeYear } from "../results/actions";
 import { laureateColumns, type LaureateRow } from "./columns";
 import { ExportMenu } from "./export-menu";
@@ -37,6 +38,7 @@ interface ResultRow {
   id: string;
   niveau_depart: string;
   niveau_admission: string | null;
+  classe_texte: string | null;
   moyenne: number;
   rang: number | null;
   awarded_prizes: string[];
@@ -67,14 +69,24 @@ export default async function LaureatesPage({
     .select("id, label, start_year")
     .order("start_year", { ascending: false });
 
+  // Default view: the current academic year (or the latest available).
+  // "all" is the explicit opt-out carried in the URL.
+  const defaultYearId = pickDefaultSchoolYear(schoolYears ?? [])?.id;
+  let effectiveYear: string | undefined;
+  if (filters.year === "all") {
+    effectiveYear = undefined;
+  } else {
+    effectiveYear = filters.year ?? defaultYearId;
+  }
+
   let query = supabase
     .from("results")
     .select(
-      "id, niveau_depart, niveau_admission, moyenne, rang, awarded_prizes, section, students(first_name, last_name), school_years!inner(label, start_year)"
+      "id, niveau_depart, niveau_admission, classe_texte, moyenne, rang, awarded_prizes, section, students(first_name, last_name), school_years!inner(label, start_year)"
     )
     .not("awarded_prizes", "eq", "{}");
 
-  if (filters.year) query = query.eq("school_year_id", filters.year);
+  if (effectiveYear) query = query.eq("school_year_id", effectiveYear);
   if (filters.section === "francophone" || filters.section === "anglophone") {
     query = query.eq("section", filters.section);
   }
@@ -91,6 +103,7 @@ export default async function LaureatesPage({
         id: r.id,
         niveau_depart: r.niveau_depart,
         niveau_admission: r.niveau_admission,
+        classe_texte: r.classe_texte,
         moyenne: r.moyenne,
         rang: r.rang,
         awarded_prizes: r.awarded_prizes,
@@ -103,15 +116,16 @@ export default async function LaureatesPage({
     }
   );
 
-  const recomputeCurrentYear = filters.year
+  const yearToRecompute = effectiveYear;
+  const recomputeCurrentYear = yearToRecompute
     ? async () => {
         "use server";
-        await recomputeYear(filters.year!);
+        await recomputeYear(yearToRecompute);
       }
     : undefined;
 
-  const scopeLabel = filters.year
-    ? (schoolYears?.find((y) => y.id === filters.year)?.label ?? "filtré")
+  const scopeLabel = effectiveYear
+    ? (schoolYears?.find((y) => y.id === effectiveYear)?.label ?? "filtré")
     : "toutes-années";
 
   return (
@@ -132,11 +146,12 @@ export default async function LaureatesPage({
       </PageHeader>
 
       <form method="GET" className="flex flex-wrap items-end gap-3">
-        <Select name="year" defaultValue={filters.year ?? ""}>
+        <Select name="year" defaultValue={effectiveYear ?? "all"}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Toutes les années" />
+            <SelectValue placeholder="Année" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="all">Toutes les années</SelectItem>
             {schoolYears?.map((y) => (
               <SelectItem key={y.id} value={y.id}>
                 {y.label}

@@ -19,6 +19,7 @@ export interface StudentResultRow {
   rang: number | null;
   niveau_depart: string;
   niveau_admission: string | null;
+  classe_texte: string | null;
   awarded_prizes: string[];
   school_year_label: string;
 }
@@ -32,10 +33,11 @@ export const studentResultColumns: ColumnDef<StudentResultRow>[] = [
   },
   {
     id: "niveaux",
-    header: "Départ → Admission",
+    header: "Classe (départ → arrivée)",
     cell: ({ row }) => (
       <span>
-        {row.original.niveau_depart} → {row.original.niveau_admission ?? "—"}
+        {row.original.classe_texte ??
+          `${row.original.niveau_depart} → ${row.original.niveau_admission ?? "—"}`}
       </span>
     ),
   },

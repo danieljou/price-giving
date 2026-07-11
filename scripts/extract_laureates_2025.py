@@ -130,7 +130,16 @@ def main():
     ambiguous_sections = []
     duplicate_names = []
 
-    def add(name, section, depart_raw, arrivee_raw, moyenne, rang, prize, observation=""):
+    def add(
+        name,
+        section,
+        depart_raw,
+        arrivee_raw,
+        moyenne,
+        rang,
+        prize,
+        observation="",
+    ):
         key = normalize_name(name)
         depart = normalize_niveau(depart_raw)
         arrivee = normalize_niveau(arrivee_raw) if arrivee_raw else None
@@ -145,7 +154,9 @@ def main():
         # (results.niveau_depart is NOT NULL).
         if depart is None and not depart_raw and not arrivee_raw:
             depart = "UNIVERSITE"
-            ambiguous_sections.append((name, f"(vide, déduit de: {observation})", ""))
+            ambiguous_sections.append(
+                (name, f"(vide, déduit de: {observation})", "")
+            )
 
         # University-level rows have no anglo/francophone marker in the raw
         # label, so the section guess (defaulting to francophone) is unverified.

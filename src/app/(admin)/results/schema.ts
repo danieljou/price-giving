@@ -12,6 +12,10 @@ export const resultSchema = z.object({
   }),
   niveau_depart: z.string().min(1, { error: "Choisissez un niveau de départ." }),
   niveau_admission: z.string().optional(),
+  classe_texte: z
+    .string()
+    .max(120, { error: "120 caractères maximum." })
+    .optional(),
   moyenne: z
     .string()
     .min(1, { error: "La moyenne est requise." })

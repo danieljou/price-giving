@@ -1,9 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, FileSpreadsheet, FileText, FileType, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,8 +20,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { niveauRank } from "@/lib/prizes/niveau-order";
-import type { LaureateRow } from "./columns";
+import { classeDisplay, type LaureateRow } from "./columns";
+
+type ExportFormat = "pdf" | "word" | "excel" | "csv";
+
+const FORMAT_LABELS: Record<ExportFormat, string> = {
+  pdf: "PDF",
+  word: "Word",
+  excel: "Excel",
+  csv: "CSV",
+};
+
+const FORMAT_EXTENSIONS: Record<ExportFormat, string> = {
+  pdf: ".pdf",
+  word: ".docx",
+  excel: ".xlsx",
+  csv: ".csv",
+};
 
 const PRIZE_LABELS: Record<string, string> = {
   SPECIAL: "Prix Spécial",
@@ -29,8 +54,7 @@ const HEADERS = [
   "Nom(s) et Prénom(s)",
   "Section",
   "Année",
-  "Classe départ",
-  "Classe arrivée",
+  "Classe (départ → arrivée)",
   "Moyenne",
   "Rang",
 ];
@@ -47,8 +71,7 @@ function rowCells(row: LaureateRow, index: number): (string | number)[] {
     row.student_name,
     row.section.charAt(0).toUpperCase() + row.section.slice(1),
     row.school_year_label,
-    row.niveau_depart,
-    row.niveau_admission ?? "—",
+    classeDisplay(row),
     row.moyenne != null ? `${row.moyenne}/20` : "—",
     row.rang ?? "—",
   ];
@@ -92,18 +115,63 @@ function baseFilename(scopeLabel: string): string {
 
 export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
   const [busy, setBusy] = useState(false);
+  const [previewFormat, setPreviewFormat] = useState<ExportFormat | null>(
+    null
+  );
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+
+  // Release the PDF blob URL when the preview closes or changes
+  useEffect(() => {
+    return () => {
+      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    };
+  }, [pdfUrl]);
+
+  async function openPreview(format: ExportFormat) {
+    setPreviewFormat(format);
+    if (format === "pdf") {
+      setBusy(true);
+      try {
+        const doc = await buildPdfDoc();
+        setPdfUrl(URL.createObjectURL(doc.output("blob")));
+      } catch (err) {
+        console.error(err);
+        toast.error("Impossible de générer l'aperçu PDF.");
+        setPreviewFormat(null);
+      } finally {
+        setBusy(false);
+      }
+    }
+  }
+
+  function closePreview() {
+    setPreviewFormat(null);
+    setPdfUrl(null);
+  }
 
   async function run(label: string, fn: () => Promise<void>) {
     setBusy(true);
     try {
       await fn();
       toast.success(`Export ${label} généré (${rows.length} lauréats).`);
+      closePreview();
     } catch (err) {
       console.error(err);
       toast.error(`L'export ${label} a échoué.`);
     } finally {
       setBusy(false);
     }
+  }
+
+  function confirmDownload() {
+    if (!previewFormat) return;
+    const exporters: Record<ExportFormat, () => Promise<void>> = {
+      pdf: exportPdf,
+      word: exportWord,
+      excel: exportExcel,
+      csv: exportCsv,
+    };
+    void run(FORMAT_LABELS[previewFormat], exporters[previewFormat]);
   }
 
   async function exportCsv() {
@@ -138,8 +206,7 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
         { wch: 34 },
         { wch: 12 },
         { wch: 10 },
-        { wch: 14 },
-        { wch: 14 },
+        { wch: 24 },
         { wch: 9 },
         { wch: 6 },
       ];
@@ -153,7 +220,7 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
     XLSX.writeFile(workbook, `${baseFilename(scopeLabel)}.xlsx`);
   }
 
-  async function exportPdf() {
+  async function buildPdfDoc() {
     const [{ jsPDF }, autoTable] = await Promise.all([
       import("jspdf"),
       import("jspdf-autotable").then((m) => m.default),
@@ -191,6 +258,11 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
         y = 20;
       }
     }
+    return doc;
+  }
+
+  async function exportPdf() {
+    const doc = await buildPdfDoc();
     doc.save(`${baseFilename(scopeLabel)}.pdf`);
   }
 
@@ -277,39 +349,189 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" disabled={busy || rows.length === 0}>
-          {busy ? (
-            <Loader2 className="animate-spin" aria-hidden="true" />
-          ) : (
-            <Download aria-hidden="true" />
-          )}
-          Exporter
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>
-          {rows.length} lauréat{rows.length > 1 ? "s" : ""}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => run("PDF", exportPdf)}>
-          <FileText aria-hidden="true" />
-          PDF (.pdf)
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => run("Word", exportWord)}>
-          <FileType aria-hidden="true" />
-          Word (.docx)
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => run("Excel", exportExcel)}>
-          <FileSpreadsheet aria-hidden="true" />
-          Excel (.xlsx)
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => run("CSV", exportCsv)}>
-          <FileSpreadsheet aria-hidden="true" />
-          CSV (.csv)
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" disabled={busy || rows.length === 0}>
+            {busy ? (
+              <Loader2 className="animate-spin" aria-hidden="true" />
+            ) : (
+              <Download aria-hidden="true" />
+            )}
+            Exporter
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>
+            {rows.length} lauréat{rows.length > 1 ? "s" : ""}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => openPreview("pdf")}>
+            <FileText aria-hidden="true" />
+            PDF (.pdf)
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => openPreview("word")}>
+            <FileType aria-hidden="true" />
+            Word (.docx)
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => openPreview("excel")}>
+            <FileSpreadsheet aria-hidden="true" />
+            Excel (.xlsx)
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => openPreview("csv")}>
+            <FileSpreadsheet aria-hidden="true" />
+            CSV (.csv)
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog
+        open={previewFormat !== null}
+        onOpenChange={(open) => {
+          if (!open) closePreview();
+        }}
+      >
+        <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>
+              Aperçu — export {previewFormat ? FORMAT_LABELS[previewFormat] : ""}
+            </DialogTitle>
+            <DialogDescription>
+              {rows.length} lauréat{rows.length > 1 ? "s" : ""} · {scopeLabel} ·
+              fichier {baseFilename(scopeLabel)}
+              {previewFormat ? FORMAT_EXTENSIONS[previewFormat] : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="min-h-0 flex-1">
+            {previewFormat === "pdf" &&
+              (pdfUrl ? (
+                <iframe
+                  src={pdfUrl}
+                  title="Aperçu du document PDF"
+                  className="h-[60vh] w-full rounded-md border border-border"
+                />
+              ) : (
+                <div className="flex h-[60vh] items-center justify-center rounded-md border border-border">
+                  <Loader2
+                    className="size-6 animate-spin text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <span className="sr-only">Génération de l&apos;aperçu…</span>
+                </div>
+              ))}
+
+            {previewFormat && previewFormat !== "pdf" && (
+              <ScrollArea className="h-[60vh] rounded-md border border-border">
+                <div className="p-4">
+                  <HtmlPreview rows={rows} format={previewFormat} />
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closePreview} disabled={busy}>
+              Annuler
+            </Button>
+            <Button onClick={confirmDownload} disabled={busy}>
+              {busy ? (
+                <Loader2 className="animate-spin" aria-hidden="true" />
+              ) : (
+                <Download aria-hidden="true" />
+              )}
+              Télécharger{" "}
+              {previewFormat ? FORMAT_EXTENSIONS[previewFormat] : ""}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+/** Faithful HTML rendering of what the exported file will contain: grouped
+ *  prize tables for Word/Excel (one table per sheet/section), a flat table
+ *  with a Prix column for CSV. */
+function HtmlPreview({
+  rows,
+  format,
+}: Readonly<{ rows: LaureateRow[]; format: "word" | "excel" | "csv" }>) {
+  if (format === "csv") {
+    const sorted = [...rows].sort(ceremonySort);
+    return (
+      <PreviewTable
+        headers={[...HEADERS, "Prix"]}
+        body={sorted.map((r, i) => [
+          ...rowCells(r, i),
+          r.awarded_prizes.map((c) => PRIZE_LABELS[c] ?? c).join(", "),
+        ])}
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      {format === "word" && (
+        <div className="text-center">
+          <p className="text-lg font-bold text-foreground">REMISE DES PRIX</p>
+          <p className="text-sm text-muted-foreground">Liste des lauréats</p>
+        </div>
+      )}
+      {groupByPrize(rows).map(([code, group]) => (
+        <section key={code}>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">
+            {PRIZE_LABELS[code] ?? code} ({group.length})
+            {format === "excel" && (
+              <span className="ml-2 font-normal text-muted-foreground">
+                — feuille dédiée
+              </span>
+            )}
+          </h3>
+          <PreviewTable
+            headers={HEADERS}
+            body={group.map((r, i) => rowCells(r, i))}
+          />
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function PreviewTable({
+  headers,
+  body,
+}: Readonly<{ headers: string[]; body: (string | number)[][] }>) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-xs">
+        <thead>
+          <tr>
+            {headers.map((h) => (
+              <th
+                key={h}
+                className="border border-border bg-primary px-2 py-1.5 text-left font-semibold text-primary-foreground"
+              >
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {body.map((cells, rowIdx) => (
+            // Row order is stable for a given export snapshot
+             
+            <tr key={rowIdx} className="even:bg-muted/50">
+              {cells.map((cell, cellIdx) => (
+                 
+                <td key={cellIdx} className="border border-border px-2 py-1">
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

@@ -67,7 +67,9 @@
   --destructive: #dc2626;
   --border: #e2e8f0;
   --input: #e2e8f0;
-  --ring: #1e40af;
+  /* Soft focus ring: light blue so shadcn's ring-ring/50 reads as a halo,
+     not a hard outline */
+  --ring: #93c5fd;
   /* Categorical chart palette — validated (lightness band, chroma, CVD, contrast) */
   --chart-1: #2563eb;
   --chart-2: #d97706;
@@ -103,7 +105,7 @@
   --destructive: #f87171;
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: #3b82f6;
+  --ring: #60a5fa;
   /* Dark-mode categorical palette — validated against the dark card surface */
   --chart-1: #3b82f6;
   --chart-2: #d97706;
@@ -135,9 +137,11 @@
   ::selection {
     background: color-mix(in oklch, var(--primary) 20%, transparent);
   }
-  /* Visible, consistent keyboard focus everywhere */
-  :focus-visible {
-    outline: 2px solid var(--ring);
+  /* Visible but soft keyboard focus everywhere. Form fields (inputs, selects,
+     buttons) already draw their own shadcn halo ring — skip them so the two
+     indicators don't stack into a harsh double outline. */
+  :focus-visible:not(input, select, textarea, button, [role="combobox"]) {
+    outline: 2px solid color-mix(in oklch, var(--ring) 70%, transparent);
     outline-offset: 2px;
   }
   @media (prefers-reduced-motion: reduce) {

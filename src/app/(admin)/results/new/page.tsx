@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
+import { pickDefaultSchoolYear } from "@/lib/school-year";
 import { createResult } from "../actions";
 import { ResultForm } from "../result-form";
 
@@ -20,10 +21,12 @@ export default async function NewResultPage({
         .order("last_name"),
       supabase
         .from("school_years")
-        .select("id, label")
+        .select("id, label, start_year")
         .order("start_year", { ascending: false }),
       supabase.from("niveaux").select("section, code, progression_order"),
     ]);
+
+  const defaultSchoolYearId = pickDefaultSchoolYear(schoolYears ?? [])?.id;
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
@@ -39,6 +42,7 @@ export default async function NewResultPage({
             schoolYears={schoolYears ?? []}
             niveaux={niveaux ?? []}
             defaultStudentId={studentId}
+            defaultSchoolYearId={defaultSchoolYearId}
             submitLabel="Enregistrer"
           />
         </CardContent>

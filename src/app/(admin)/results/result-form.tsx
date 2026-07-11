@@ -18,14 +18,10 @@ import {
 } from "@/components/ui/select";
 import type { ResultFormState } from "./actions";
 import { resultSchema, type ResultValues } from "./schema";
+import { StudentCombobox, type ComboStudent } from "./student-combobox";
 import type { Section } from "@/lib/supabase/types";
 
-interface Student {
-  id: string;
-  first_name: string;
-  last_name: string;
-  section: Section;
-}
+type Student = ComboStudent;
 
 interface SchoolYear {
   id: string;
@@ -44,16 +40,19 @@ interface ResultFormProps {
   schoolYears: SchoolYear[];
   niveaux: Niveau[];
   defaultStudentId?: string;
+  /** Pre-selected year on create: current academic year, else the latest. */
+  defaultSchoolYearId?: string;
   defaultValues?: Partial<ResultValues>;
   submitLabel: string;
 }
 
 export function ResultForm({
   action,
-  students,
+  students: initialStudents,
   schoolYears,
   niveaux,
   defaultStudentId,
+  defaultSchoolYearId,
   defaultValues,
   submitLabel,
 }: Readonly<ResultFormProps>) {
@@ -62,6 +61,8 @@ export function ResultForm({
   const [manualReviewNotes, setManualReviewNotes] = useState<string[] | null>(
     null
   );
+  // Local copy so an inline-created student appears without a refetch
+  const [students, setStudents] = useState(initialStudents);
   const isEditing = !!defaultValues;
 
   const {
@@ -75,6 +76,7 @@ export function ResultForm({
     resolver: zodResolver(resultSchema),
     defaultValues: {
       student_id: defaultStudentId ?? "",
+      school_year_id: defaultSchoolYearId ?? "",
       section:
         defaultValues?.section ??
         students.find((s) => s.id === defaultStudentId)?.section,
@@ -108,6 +110,9 @@ export function ResultForm({
     formData.set("niveau_depart", values.niveau_depart);
     if (values.niveau_admission) {
       formData.set("niveau_admission", values.niveau_admission);
+    }
+    if (values.classe_texte) {
+      formData.set("classe_texte", values.classe_texte);
     }
     formData.set("moyenne", values.moyenne);
     if (values.rang) {
@@ -146,22 +151,13 @@ export function ResultForm({
               name="student_id"
               control={control}
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger
-                    id="student_id"
-                    className="w-full"
-                    aria-invalid={!!errors.student_id}
-                  >
-                    <SelectValue placeholder="Choisir un étudiant" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {students.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.last_name} {s.first_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <StudentCombobox
+                  students={students}
+                  value={field.value}
+                  invalid={!!errors.student_id}
+                  onSelect={(s) => field.onChange(s.id)}
+                  onCreated={(s) => setStudents((prev) => [...prev, s])}
+                />
               )}
             />
             {errors.student_id && (
@@ -299,6 +295,26 @@ export function ResultForm({
             niveaux correspondants.
           </p>
         )}
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="classe_texte">
+            Classe départ → arrivée (texte libre, optionnel)
+          </Label>
+          <Input
+            id="classe_texte"
+            placeholder="ex. 6e M1 → 5e M1"
+            aria-invalid={!!errors.classe_texte}
+            {...register("classe_texte")}
+          />
+          <p className="text-xs text-muted-foreground">
+            Intitulé exact tel qu&apos;il apparaîtra sur la liste officielle —
+            les niveaux sélectionnés ci-dessus servent au calcul du prix.
+          </p>
+          {errors.classe_texte && (
+            <p className="text-sm text-destructive">
+              {errors.classe_texte.message}
+            </p>
+          )}
+        </div>
       </fieldset>
 
       <fieldset className="flex flex-col gap-4">
