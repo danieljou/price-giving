@@ -33,7 +33,7 @@ export default function LoginPage() {
   function onSubmit(values: LoginValues) {
     setServerError(null);
     const formData = new FormData();
-    formData.set("email", values.email);
+    formData.set("identifier", values.identifier);
     formData.set("password", values.password);
 
     startTransition(async () => {
@@ -94,18 +94,22 @@ export default function LoginPage() {
             className="flex flex-col gap-4"
           >
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="identifier">Email ou téléphone</Label>
               <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                aria-invalid={!!errors.email}
-                aria-describedby={errors.email ? "email-error" : undefined}
-                {...register("email")}
+                id="identifier"
+                type="text"
+                inputMode="email"
+                autoComplete="username"
+                placeholder="admin@exemple.com ou 6XX XX XX XX"
+                aria-invalid={!!errors.identifier}
+                aria-describedby={
+                  errors.identifier ? "identifier-error" : undefined
+                }
+                {...register("identifier")}
               />
-              {errors.email && (
-                <p id="email-error" className="text-sm text-destructive">
-                  {errors.email.message}
+              {errors.identifier && (
+                <p id="identifier-error" className="text-sm text-destructive">
+                  {errors.identifier.message}
                 </p>
               )}
             </div>

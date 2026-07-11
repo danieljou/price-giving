@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { loginSchema } from "./schema";
+import { isPhoneIdentifier, loginSchema, normalizePhone } from "./schema";
 
 export interface LoginState {
   error?: string;
@@ -10,16 +10,22 @@ export interface LoginState {
 
 export async function login(formData: FormData): Promise<LoginState> {
   const parsed = loginSchema.safeParse({
-    email: formData.get("email"),
+    identifier: formData.get("identifier"),
     password: formData.get("password"),
   });
 
   if (!parsed.success) {
-    return { error: "Email et mot de passe requis." };
+    return { error: "Email/téléphone et mot de passe requis." };
   }
 
+  const { identifier, password } = parsed.data;
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+
+  const credentials = isPhoneIdentifier(identifier)
+    ? { phone: normalizePhone(identifier), password }
+    : { email: identifier, password };
+
+  const { error } = await supabase.auth.signInWithPassword(credentials);
 
   if (error) {
     return { error: "Identifiants invalides." };
