@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "seed:criteria": "tsx src/lib/prizes/criteria-seed.ts",
-    "import:laureates": "tsx src/lib/prizes/import-laureates.ts"
+    "import:laureates": "tsx src/lib/prizes/import-laureates.ts",
+    "user:set-phone": "tsx src/lib/scripts/set-phone.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

@@ -24,7 +24,13 @@ function parseResultForm(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { error: "Champs invalides (moyenne entre 0 et 20 requise)." };
+    // Report the actual field that failed rather than a message hardcoded
+    // to "moyenne" — this path is normally caught client-side first, but
+    // must still point at the right field if it's ever reached directly.
+    const firstIssue = parsed.error.issues[0];
+    return {
+      error: firstIssue?.message ?? "Champs invalides.",
+    };
   }
 
   return {
