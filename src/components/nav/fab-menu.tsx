@@ -11,6 +11,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { FAB_NAV_ITEMS } from "./nav-items";
+import { ThemeToggleFabRow } from "./theme-toggle";
 
 interface FabMenuProps {
   onLogout: () => Promise<void>;
@@ -48,6 +49,7 @@ export function FabMenu({ onLogout }: Readonly<FabMenuProps>) {
               </Link>
             </SheetClose>
           ))}
+          <ThemeToggleFabRow />
           <form action={onLogout}>
             <button
               type="submit"

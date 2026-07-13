@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UserPlus } from "lucide-react";
+import { Upload, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/data-table";
@@ -19,6 +19,12 @@ export default async function StudentsPage() {
         title="Étudiants"
         description={`${students?.length ?? 0} étudiant${(students?.length ?? 0) > 1 ? "s" : ""} enregistré${(students?.length ?? 0) > 1 ? "s" : ""}`}
       >
+        <Button variant="outline" asChild>
+          <Link href="/students/import">
+            <Upload />
+            Importer
+          </Link>
+        </Button>
         <Button asChild>
           <Link href="/students/new">
             <UserPlus />

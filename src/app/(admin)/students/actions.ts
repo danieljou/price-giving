@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { findExistingStudent } from "@/lib/students/duplicate";
 import { studentSchema } from "./schema";
 
 export interface StudentFormState {
@@ -24,6 +25,18 @@ export async function createStudent(
   }
 
   const supabase = await createClient();
+
+  const { data: sameSection } = await supabase
+    .from("students")
+    .select("id, first_name, last_name, section")
+    .eq("section", parsed.data.section);
+  const duplicate = findExistingStudent(parsed.data, sameSection ?? []);
+  if (duplicate) {
+    return {
+      error: `${duplicate.last_name} ${duplicate.first_name} existe déjà en section ${duplicate.section} — utilisez sa fiche existante plutôt que d'en créer une autre.`,
+    };
+  }
+
   const { data, error } = await supabase
     .from("students")
     .insert({
@@ -70,6 +83,18 @@ export async function quickCreateStudent(
   }
 
   const supabase = await createClient();
+
+  const { data: sameSection } = await supabase
+    .from("students")
+    .select("id, first_name, last_name, section")
+    .eq("section", parsed.data.section);
+  const duplicate = findExistingStudent(parsed.data, sameSection ?? []);
+  if (duplicate) {
+    return {
+      error: `${duplicate.last_name} ${duplicate.first_name} existe déjà en section ${duplicate.section} — sélectionnez-le dans la liste plutôt que d'en créer un autre.`,
+    };
+  }
+
   const { data, error } = await supabase
     .from("students")
     .insert({

@@ -19,7 +19,7 @@ function parseResultForm(formData: FormData) {
     niveau_depart: formData.get("niveau_depart"),
     niveau_admission: formData.get("niveau_admission"),
     classe_texte: formData.get("classe_texte") ?? undefined,
-    moyenne: formData.get("moyenne"),
+    moyenne: formData.get("moyenne") ?? undefined,
     rang: formData.get("rang"),
   });
 
@@ -40,7 +40,7 @@ function parseResultForm(formData: FormData) {
     niveauDepart: parsed.data.niveau_depart,
     niveauAdmission: parsed.data.niveau_admission || null,
     classeTexte: parsed.data.classe_texte?.trim() || null,
-    moyenne: Number(parsed.data.moyenne),
+    moyenne: parsed.data.moyenne ? Number(parsed.data.moyenne) : null,
     rang: parsed.data.rang ? Number(parsed.data.rang) : null,
   };
 }
@@ -65,6 +65,7 @@ export async function createResult(
     moyenne: parsed.moyenne,
     rang: parsed.rang,
     awarded_prizes,
+    manual_review_notes: manualReviewNotes,
     criteria_computed_at,
   });
 
@@ -111,6 +112,7 @@ export async function updateResult(
       moyenne: parsed.moyenne,
       rang: parsed.rang,
       awarded_prizes,
+      manual_review_notes: manualReviewNotes,
       criteria_computed_at,
     })
     .eq("id", resultId);
@@ -140,7 +142,7 @@ export async function recomputeYear(schoolYearId: string) {
     .eq("school_year_id", schoolYearId);
 
   for (const result of results ?? []) {
-    const { awarded_prizes, criteria_computed_at } =
+    const { awarded_prizes, criteria_computed_at, manualReviewNotes } =
       await computeAwardedPrizes(supabase, {
         studentId: result.student_id,
         schoolYearId: result.school_year_id,
@@ -153,10 +155,27 @@ export async function recomputeYear(schoolYearId: string) {
 
     await supabase
       .from("results")
-      .update({ awarded_prizes, criteria_computed_at })
+      .update({
+        awarded_prizes,
+        manual_review_notes: manualReviewNotes,
+        criteria_computed_at,
+      })
       .eq("id", result.id);
   }
 
   revalidatePath("/laureates");
   revalidatePath("/dashboard");
+  revalidatePath("/review");
+}
+
+/** Dismisses a result from the manual-review queue once an admin has looked
+ *  at it — clears the stored notes without touching the awarded prizes. */
+export async function resolveManualReview(resultId: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("results")
+    .update({ manual_review_notes: [] })
+    .eq("id", resultId);
+
+  revalidatePath("/review");
 }

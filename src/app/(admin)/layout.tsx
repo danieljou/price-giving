@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import { BottomTabBar } from "@/components/nav/bottom-tab-bar";
 import { FabMenu } from "@/components/nav/fab-menu";
+import { CommandMenu } from "@/components/nav/command-menu";
 import { logout } from "./actions";
 
 export default async function AdminLayout({
@@ -41,6 +42,7 @@ export default async function AdminLayout({
 
       <BottomTabBar />
       <FabMenu onLogout={logout} />
+      <CommandMenu />
     </SidebarProvider>
   );
 }

@@ -18,9 +18,9 @@ export const resultSchema = z.object({
     .optional(),
   moyenne: z
     .string()
-    .min(1, { error: "La moyenne est requise." })
+    .optional()
     .refine(
-      (v) => isNumberString(v) && Number(v) >= 0 && Number(v) <= 20,
+      (v) => !v || (isNumberString(v) && Number(v) >= 0 && Number(v) <= 20),
       { error: "La moyenne doit être entre 0 et 20." }
     ),
   rang: z

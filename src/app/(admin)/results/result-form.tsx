@@ -114,7 +114,9 @@ export function ResultForm({
     if (values.classe_texte) {
       formData.set("classe_texte", values.classe_texte);
     }
-    formData.set("moyenne", values.moyenne);
+    if (values.moyenne) {
+      formData.set("moyenne", values.moyenne);
+    }
     if (values.rang) {
       formData.set("rang", values.rang);
     }
@@ -323,14 +325,14 @@ export function ResultForm({
         </legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="moyenne">Moyenne (/20)</Label>
+            <Label htmlFor="moyenne">Moyenne (/20, optionnel)</Label>
             <Input
               id="moyenne"
               type="number"
               step="0.01"
               min={0}
               max={20}
-              placeholder="ex. 15,50"
+              placeholder="ex. 15,50 — laisser vide pour le Prix Spécial"
               aria-invalid={!!errors.moyenne}
               {...register("moyenne")}
             />

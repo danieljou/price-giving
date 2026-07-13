@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import { I18nProvider } from "@/components/i18n-provider";
 import { PwaRegister } from "@/components/pwa-register";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const firaSans = Fira_Sans({
   variable: "--font-sans",
@@ -57,11 +58,18 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <I18nProvider>
-          <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
-        </I18nProvider>
-        <Toaster position="top-right" richColors closeButton />
-        <PwaRegister />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <I18nProvider>
+            <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+          </I18nProvider>
+          <Toaster position="top-right" richColors closeButton />
+          <PwaRegister />
+        </ThemeProvider>
       </body>
     </html>
   );

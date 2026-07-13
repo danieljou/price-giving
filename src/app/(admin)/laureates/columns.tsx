@@ -1,8 +1,11 @@
 "use client";
 
+import Link from "next/link";
+import { Pencil } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const PRIZE_LABELS: Record<string, string> = {
   SPECIAL: "Prix Spécial",
@@ -94,6 +97,22 @@ export const laureateColumns: ColumnDef<LaureateRow>[] = [
           </Badge>
         ))}
       </div>
+    ),
+  },
+  {
+    id: "actions",
+    header: () => <span className="sr-only">Actions</span>,
+    cell: ({ row }) => (
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={`Modifier le résultat de ${row.original.student_name}`}
+        asChild
+      >
+        <Link href={`/results/${row.original.id}/edit`}>
+          <Pencil aria-hidden="true" />
+        </Link>
+      </Button>
     ),
   },
 ];

@@ -1,4 +1,6 @@
 import {
+  ArrowDown,
+  ArrowUp,
   Award,
   ClipboardList,
   TrendingUp,
@@ -50,16 +52,47 @@ const KPI_TONES = {
     "bg-violet-600/10 text-violet-700 dark:bg-violet-400/10 dark:text-violet-400",
 } as const;
 
+interface YoyDelta {
+  text: string;
+  positive: boolean;
+}
+
+/** Year-over-year % change, or null when there's no prior-year data to compare against. */
+function yoyDelta(current: number, previous: number | undefined): YoyDelta | null {
+  if (previous === undefined || previous === 0) return null;
+  const pct = Math.round(((current - previous) / previous) * 100);
+  return { text: `${pct >= 0 ? "+" : ""}${pct}%`, positive: pct >= 0 };
+}
+
+function YoyBadge({ delta }: Readonly<{ delta: YoyDelta | null }>) {
+  if (!delta) return null;
+  const Icon = delta.positive ? ArrowUp : ArrowDown;
+  return (
+    <span
+      className={`inline-flex items-center gap-0.5 font-medium ${
+        delta.positive
+          ? "text-emerald-600 dark:text-emerald-400"
+          : "text-rose-600 dark:text-rose-400"
+      }`}
+    >
+      <Icon className="size-3" aria-hidden="true" />
+      {delta.text}
+    </span>
+  );
+}
+
 function KpiCard({
   title,
   value,
   hint,
+  extra,
   icon: Icon,
   tone,
 }: Readonly<{
   title: string;
   value: string;
   hint: string;
+  extra?: React.ReactNode;
   icon: React.ComponentType<{ className?: string }>;
   tone: keyof typeof KPI_TONES;
 }>) {
@@ -79,7 +112,7 @@ function KpiCard({
             {value}
           </p>
           <p className="mt-1.5 truncate text-xs text-muted-foreground">
-            {hint}
+            {hint} {extra}
           </p>
         </div>
       </CardContent>
@@ -153,6 +186,35 @@ export default async function DashboardPage() {
     r.awarded_prizes.includes("EXC_PLUS")
   ).length;
 
+  // Distinct laureate rows per year (not a prize-count sum, since one row can
+  // hold both EXC and EXC_PLUS — counting the row once avoids double-counting).
+  const yearTotals = new Map<string, number>();
+  for (const r of laureates) {
+    const year = yearOf(r);
+    if (!year) continue;
+    yearTotals.set(year.label, (yearTotals.get(year.label) ?? 0) + 1);
+  }
+
+  const latestYear = yearRows.at(-1);
+  const previousYear = yearRows.length >= 2 ? yearRows.at(-2) : undefined;
+
+  const latestTotal = latestYear ? (yearTotals.get(latestYear.year) ?? 0) : 0;
+  const previousTotal = previousYear
+    ? yearTotals.get(previousYear.year)
+    : undefined;
+  const laureatesDelta = yoyDelta(latestTotal, previousTotal);
+
+  // % of last year's Excellence winners who repeated this year (i.e. earned
+  // EXC_PLUS) — the metric that actually matters for this specific prize.
+  const retentionRate =
+    latestYear && previousYear && previousYear.EXC > 0
+      ? Math.round((latestYear.EXC_PLUS / previousYear.EXC) * 100)
+      : null;
+  const excellencePlusHint =
+    retentionRate !== null && previousYear
+      ? `${retentionRate}% des Excellence ${previousYear.year} ont récidivé`
+      : "Excellence 2 années consécutives";
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -179,13 +241,14 @@ export default async function DashboardPage() {
           title="Lauréats"
           value={String(laureates.length)}
           hint={`${laureateRate}% des résultats priment`}
+          extra={<YoyBadge delta={laureatesDelta} />}
           icon={Award}
           tone="amber"
         />
         <KpiCard
           title="Excellence+"
           value={String(excellencePlusCount)}
-          hint="Excellence 2 années consécutives"
+          hint={excellencePlusHint}
           icon={TrendingUp}
           tone="violet"
         />

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, GraduationCap } from "lucide-react";
+import { LogOut, GraduationCap, Search } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -13,9 +13,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ALL_NAV_ITEMS } from "./nav-items";
+import { OPEN_COMMAND_MENU_EVENT } from "./command-menu";
+import { ThemeToggle } from "./theme-toggle";
 
 interface AppSidebarProps {
   userEmail: string | null;
@@ -46,6 +49,23 @@ export function AppSidebar({ userEmail, onLogout }: Readonly<AppSidebarProps>) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="Rechercher (Ctrl+K)"
+                  onClick={() =>
+                    window.dispatchEvent(new Event(OPEN_COMMAND_MENU_EVENT))
+                  }
+                >
+                  <Search aria-hidden="true" />
+                  <span>Rechercher</span>
+                  <kbd className="ml-auto hidden rounded border border-border px-1 text-[10px] text-muted-foreground group-data-[collapsible=icon]:hidden md:inline">
+                    Ctrl+K
+                  </kbd>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+            <SidebarSeparator className="my-2" />
             <SidebarMenu>
               {ALL_NAV_ITEMS.map((item) => {
                 const isActive =
@@ -86,6 +106,9 @@ export function AppSidebar({ userEmail, onLogout }: Readonly<AppSidebarProps>) {
                 {userEmail ?? "Administrateur"}
               </span>
             </div>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <ThemeToggle />
           </SidebarMenuItem>
           <SidebarMenuItem>
             <form action={onLogout}>

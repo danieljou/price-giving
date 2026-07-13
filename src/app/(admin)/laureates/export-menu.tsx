@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Download, FileSpreadsheet, FileText, FileType, Loader2 } from "lucide-react";
+import { useState } from "react";
+import {
+  Download,
+  FileSpreadsheet,
+  FileText,
+  FileType,
+  Loader2,
+  Tags,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,8 +19,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { niveauRank } from "@/lib/prizes/niveau-order";
+import {
+  CYCLE_ORDER,
+  cyclesForPrize,
+  niveauCycle,
+  type Cycle,
+} from "@/lib/prizes/niveau-cycle";
 import { classeDisplay, type LaureateRow } from "./columns";
 
 type ExportFormat = "pdf" | "word" | "excel" | "csv";
@@ -33,13 +37,6 @@ const FORMAT_LABELS: Record<ExportFormat, string> = {
   csv: "CSV",
 };
 
-const FORMAT_EXTENSIONS: Record<ExportFormat, string> = {
-  pdf: ".pdf",
-  word: ".docx",
-  excel: ".xlsx",
-  csv: ".csv",
-};
-
 const PRIZE_LABELS: Record<string, string> = {
   SPECIAL: "Prix Spécial",
   EXC: "Prix d'Excellence",
@@ -48,6 +45,21 @@ const PRIZE_LABELS: Record<string, string> = {
 };
 
 const PRIZE_ORDER = ["SPECIAL", "EXC", "ENC", "EXC_PLUS"];
+
+/** One accent color per prize, shared by the PDF/Word section headers. */
+const PRIZE_COLORS: Record<string, { rgb: [number, number, number]; hex: string }> = {
+  SPECIAL: { rgb: [124, 58, 237], hex: "7C3AED" },
+  EXC: { rgb: [217, 119, 6], hex: "D97706" },
+  ENC: { rgb: [13, 148, 136], hex: "0D9488" },
+  EXC_PLUS: { rgb: [30, 64, 175], hex: "1E40AF" },
+};
+
+const SEPARATOR_GRAY_RGB: [number, number, number] = [229, 231, 235];
+const SEPARATOR_GRAY_HEX = "E5E7EB";
+const EMPHASIS_GRAY_RGB: [number, number, number] = [229, 231, 235];
+const EMPHASIS_GRAY_HEX = "E5E7EB";
+const GRAND_TOTAL_GRAY_RGB: [number, number, number] = [209, 213, 219];
+const GRAND_TOTAL_GRAY_HEX = "D1D5DB";
 
 const HEADERS = [
   "N°",
@@ -99,6 +111,94 @@ function groupByPrize(rows: LaureateRow[]): [string, LaureateRow[]][] {
   ]).filter(([, group]) => group.length > 0);
 }
 
+type GroupItem =
+  | { separator: false; row: LaureateRow; index: number }
+  | { separator: true };
+
+/** Marks every point where consecutive rows cross from one teaching cycle
+ *  into the next (e.g. Primaire → Secondaire), so renderers can insert a
+ *  visual break there. */
+function withCycleSeparators(group: LaureateRow[]): GroupItem[] {
+  const items: GroupItem[] = [];
+  let previousCycle: Cycle | null | undefined;
+  group.forEach((row, index) => {
+    const cycle = niveauCycle(row.niveau_depart);
+    if (previousCycle !== undefined && cycle !== previousCycle) {
+      items.push({ separator: true });
+    }
+    items.push({ separator: false, row, index });
+    previousCycle = cycle;
+  });
+  return items;
+}
+
+interface SummaryRow {
+  label: string;
+  values: (number | null)[];
+  total: number;
+  emphasis?: boolean;
+}
+
+interface Summary {
+  cycles: readonly Cycle[];
+  rows: SummaryRow[];
+  grandTotal: number;
+}
+
+/** Prize x cycle breakdown mirroring the school's official ceremony summary
+ *  sheet (Prix spécial / Excellence / Encouragement, Total 1, Excellence+,
+ *  Total 2, grand TOTAL). */
+function buildSummary(rows: LaureateRow[]): Summary {
+  const cycles = CYCLE_ORDER;
+
+  function countRow(code: string, label: string): SummaryRow {
+    const applicable = cyclesForPrize(code);
+    const values = cycles.map((cycle) =>
+      applicable.includes(cycle)
+        ? rows.filter(
+            (r) =>
+              r.awarded_prizes.includes(code) &&
+              niveauCycle(r.niveau_depart) === cycle
+          ).length
+        : null
+    );
+    const total = values.reduce((sum: number, v) => sum + (v ?? 0), 0);
+    return { label, values, total };
+  }
+
+  const special = countRow("SPECIAL", "Prix spécial");
+  const exc = countRow("EXC", "Prix d'excellence");
+  const enc = countRow("ENC", "Prix d'encouragement");
+  const total1Values = cycles.map(
+    (_, i) => (special.values[i] ?? 0) + (exc.values[i] ?? 0) + (enc.values[i] ?? 0)
+  );
+  const total1: SummaryRow = {
+    label: "Total 1",
+    values: total1Values,
+    total: total1Values.reduce((a, b) => a + b, 0),
+    emphasis: true,
+  };
+
+  const excPlus = countRow("EXC_PLUS", "Prix d'excellence plus");
+  const total2Values = cycles.map((_, i) => total1Values[i] + (excPlus.values[i] ?? 0));
+  const total2: SummaryRow = {
+    label: "Total 2",
+    values: total2Values,
+    total: total2Values.reduce((a, b) => a + b, 0),
+    emphasis: true,
+  };
+
+  return {
+    cycles,
+    rows: [special, exc, enc, total1, excPlus, total2],
+    grandTotal: total2.total,
+  };
+}
+
+function formatSummaryCell(v: number | null): string {
+  return v === null ? "—" : String(v).padStart(2, "0");
+}
+
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -115,63 +215,18 @@ function baseFilename(scopeLabel: string): string {
 
 export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
   const [busy, setBusy] = useState(false);
-  const [previewFormat, setPreviewFormat] = useState<ExportFormat | null>(
-    null
-  );
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-
-  // Release the PDF blob URL when the preview closes or changes
-  useEffect(() => {
-    return () => {
-      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
-    };
-  }, [pdfUrl]);
-
-  async function openPreview(format: ExportFormat) {
-    setPreviewFormat(format);
-    if (format === "pdf") {
-      setBusy(true);
-      try {
-        const doc = await buildPdfDoc();
-        setPdfUrl(URL.createObjectURL(doc.output("blob")));
-      } catch (err) {
-        console.error(err);
-        toast.error("Impossible de générer l'aperçu PDF.");
-        setPreviewFormat(null);
-      } finally {
-        setBusy(false);
-      }
-    }
-  }
-
-  function closePreview() {
-    setPreviewFormat(null);
-    setPdfUrl(null);
-  }
 
   async function run(label: string, fn: () => Promise<void>) {
     setBusy(true);
     try {
       await fn();
       toast.success(`Export ${label} généré (${rows.length} lauréats).`);
-      closePreview();
     } catch (err) {
       console.error(err);
       toast.error(`L'export ${label} a échoué.`);
     } finally {
       setBusy(false);
     }
-  }
-
-  function confirmDownload() {
-    if (!previewFormat) return;
-    const exporters: Record<ExportFormat, () => Promise<void>> = {
-      pdf: exportPdf,
-      word: exportWord,
-      excel: exportExcel,
-      csv: exportCsv,
-    };
-    void run(FORMAT_LABELS[previewFormat], exporters[previewFormat]);
   }
 
   async function exportCsv() {
@@ -227,6 +282,10 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
     ]);
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const lastAutoTableY = () =>
+      (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable
+        .finalY;
 
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
@@ -242,28 +301,191 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
       doc.text(`${PRIZE_LABELS[code] ?? code} (${group.length})`, 14, y);
+
+      const body = withCycleSeparators(group).map((item) =>
+        item.separator
+          ? [
+              {
+                content: "",
+                colSpan: HEADERS.length,
+                styles: { fillColor: SEPARATOR_GRAY_RGB, minCellHeight: 2 },
+              },
+            ]
+          : rowCells(item.row, item.index).map(String)
+      );
+
       autoTable(doc, {
         startY: y + 3,
         head: [HEADERS],
-        body: group.map((r, i) => rowCells(r, i).map(String)),
+        body,
         styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fillColor: [30, 64, 175], fontSize: 8 },
+        headStyles: {
+          fillColor: PRIZE_COLORS[code]?.rgb ?? [30, 64, 175],
+          textColor: [255, 255, 255],
+          fontSize: 8,
+        },
         alternateRowStyles: { fillColor: [241, 245, 249] },
         margin: { left: 14, right: 14 },
       });
-      y = (doc as unknown as { lastAutoTable: { finalY: number } })
-        .lastAutoTable.finalY + 12;
-      if (y > doc.internal.pageSize.getHeight() - 40) {
+      y = lastAutoTableY() + 12;
+      if (y > pageHeight - 40) {
         doc.addPage();
         y = 20;
       }
     }
+
+    // Synthèse — prize x cycle breakdown, mirroring the official summary sheet
+    const summary = buildSummary(rows);
+    if (y > pageHeight - 70) {
+      doc.addPage();
+      y = 20;
+    }
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Synthèse", 14, y);
+
+    autoTable(doc, {
+      startY: y + 3,
+      head: [["", ...summary.cycles, "TOTAL"]],
+      body: summary.rows.map((r) => [
+        r.label,
+        ...r.values.map(formatSummaryCell),
+        String(r.total),
+      ]),
+      styles: { fontSize: 8, cellPadding: 2, halign: "center" },
+      columnStyles: { 0: { halign: "left", fontStyle: "bold" } },
+      headStyles: {
+        fillColor: [30, 64, 175],
+        textColor: [255, 255, 255],
+        fontSize: 8,
+      },
+      didParseCell: (data) => {
+        if (data.section !== "body") return;
+        const label = summary.rows[data.row.index]?.label;
+        if (label === "Total 1" || label === "Total 2") {
+          data.cell.styles.fillColor = EMPHASIS_GRAY_RGB;
+          data.cell.styles.fontStyle = "bold";
+        }
+      },
+      margin: { left: 14, right: 14 },
+    });
+    y = lastAutoTableY() + 6;
+
+    autoTable(doc, {
+      startY: y,
+      body: [
+        [
+          {
+            content: "TOTAL",
+            colSpan: summary.cycles.length + 1,
+            styles: { halign: "left", fontStyle: "bold" },
+          },
+          String(summary.grandTotal),
+        ],
+      ],
+      styles: {
+        fontSize: 9,
+        cellPadding: 3,
+        fillColor: GRAND_TOTAL_GRAY_RGB,
+        fontStyle: "bold",
+        halign: "center",
+      },
+      margin: { left: 14, right: 14 },
+    });
+
     return doc;
   }
 
   async function exportPdf() {
     const doc = await buildPdfDoc();
     doc.save(`${baseFilename(scopeLabel)}.pdf`);
+  }
+
+  /**
+   * Adhesive name-tag sheet: one label per laureate, N° matching the exact
+   * numbering used in the main PDF (same prize grouping + ceremony sort),
+   * so a physical label can be matched back to that list at the ceremony.
+   */
+  async function buildLabelsDoc() {
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF(); // a4, mm — same defaults as buildPdfDoc
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    const margin = 10;
+    const cols = 3;
+    const linesPerPage = 8;
+    const gap = 2;
+    const cellW = (pageWidth - margin * 2 - gap * (cols - 1)) / cols;
+    const cellH =
+      (pageHeight - margin * 2 - gap * (linesPerPage - 1)) / linesPerPage;
+
+    const items = groupByPrize(rows).flatMap(([code, group]) =>
+      group.map((row, index) => ({ code, row, number: index + 1 }))
+    );
+
+    let col = 0;
+    let labelRow = 0;
+    let isFirstCell = true;
+
+    for (const item of items) {
+      if (col === 0 && labelRow === 0 && !isFirstCell) {
+        doc.addPage();
+      }
+      isFirstCell = false;
+
+      const x = margin + col * (cellW + gap);
+      const y = margin + labelRow * (cellH + gap);
+      const [r, g, b] = PRIZE_COLORS[item.code]?.rgb ?? [30, 64, 175];
+
+      doc.setDrawColor(r, g, b);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(x, y, cellW, cellH, 2, 2, "S");
+      doc.setFillColor(r, g, b);
+      doc.rect(x, y, 3, cellH, "F");
+
+      doc.setTextColor(30, 41, 59);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(20);
+      doc.text(`N° ${item.number}`, x + cellW / 2, y + cellH * 0.34, {
+        align: "center",
+      });
+
+      doc.setFontSize(10);
+      const nameLines = doc.splitTextToSize(
+        item.row.student_name,
+        cellW - 8
+      ) as string[];
+      nameLines.slice(0, 2).forEach((nameLine, li) => {
+        doc.text(nameLine, x + cellW / 2, y + cellH * 0.58 + li * 4.2, {
+          align: "center",
+        });
+      });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(r, g, b);
+      doc.text(
+        PRIZE_LABELS[item.code] ?? item.code,
+        x + cellW / 2,
+        y + cellH * 0.88,
+        { align: "center" }
+      );
+
+      col++;
+      if (col >= cols) {
+        col = 0;
+        labelRow++;
+        if (labelRow >= linesPerPage) labelRow = 0;
+      }
+    }
+
+    return doc;
+  }
+
+  async function exportLabels() {
+    const doc = await buildLabelsDoc();
+    doc.save(`${baseFilename(scopeLabel)}-etiquettes.pdf`);
   }
 
   async function exportWord() {
@@ -279,38 +501,132 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
       TextRun,
       WidthType,
       AlignmentType,
+      ShadingType,
     } = docx;
 
-    const makeTable = (group: LaureateRow[]) =>
-      new Table({
+    const headerCell = (text: string, hex: string) =>
+      new TableCell({
+        shading: { fill: hex, type: ShadingType.CLEAR, color: "auto" },
+        children: [
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [new TextRun({ text, bold: true, color: "FFFFFF" })],
+          }),
+        ],
+      });
+
+    const separatorRow = () =>
+      new TableRow({
+        children: [
+          new TableCell({
+            columnSpan: HEADERS.length,
+            shading: {
+              fill: SEPARATOR_GRAY_HEX,
+              type: ShadingType.CLEAR,
+              color: "auto",
+            },
+            children: [new Paragraph("")],
+          }),
+        ],
+      });
+
+    const makeTable = (code: string, group: LaureateRow[]) => {
+      const color = PRIZE_COLORS[code]?.hex ?? "1E40AF";
+      return new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
         rows: [
           new TableRow({
             tableHeader: true,
-            children: HEADERS.map(
-              (h) =>
-                new TableCell({
-                  children: [
-                    new Paragraph({
-                      children: [new TextRun({ text: h, bold: true })],
-                    }),
-                  ],
-                })
-            ),
+            children: HEADERS.map((h) => headerCell(h, color)),
           }),
-          ...group.map(
-            (r, i) =>
-              new TableRow({
-                children: rowCells(r, i).map(
-                  (cell) =>
-                    new TableCell({
-                      children: [new Paragraph(String(cell))],
-                    })
-                ),
-              })
+          ...withCycleSeparators(group).map((item) =>
+            item.separator
+              ? separatorRow()
+              : new TableRow({
+                  children: rowCells(item.row, item.index).map(
+                    (cell) =>
+                      new TableCell({
+                        children: [new Paragraph(String(cell))],
+                      })
+                  ),
+                })
           ),
         ],
       });
+    };
+
+    const summaryCell = (text: string, emphasis: boolean, center = false) =>
+      new TableCell({
+        shading: emphasis
+          ? { fill: EMPHASIS_GRAY_HEX, type: ShadingType.CLEAR, color: "auto" }
+          : undefined,
+        children: [
+          new Paragraph({
+            alignment: center ? AlignmentType.CENTER : undefined,
+            children: [new TextRun({ text, bold: emphasis })],
+          }),
+        ],
+      });
+
+    const summary = buildSummary(rows);
+    const summaryTable = new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({
+          tableHeader: true,
+          children: ["", ...summary.cycles, "TOTAL"].map((h) =>
+            headerCell(h, "1E40AF")
+          ),
+        }),
+        ...summary.rows.map(
+          (r) =>
+            new TableRow({
+              children: [
+                summaryCell(r.label, !!r.emphasis),
+                ...r.values.map((v) =>
+                  summaryCell(formatSummaryCell(v), !!r.emphasis, true)
+                ),
+                summaryCell(String(r.total), true, true),
+              ],
+            })
+        ),
+        new TableRow({
+          children: [
+            new TableCell({
+              columnSpan: summary.cycles.length + 1,
+              shading: {
+                fill: GRAND_TOTAL_GRAY_HEX,
+                type: ShadingType.CLEAR,
+                color: "auto",
+              },
+              children: [
+                new Paragraph({
+                  children: [new TextRun({ text: "TOTAL", bold: true })],
+                }),
+              ],
+            }),
+            new TableCell({
+              shading: {
+                fill: GRAND_TOTAL_GRAY_HEX,
+                type: ShadingType.CLEAR,
+                color: "auto",
+              },
+              children: [
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  children: [
+                    new TextRun({
+                      text: String(summary.grandTotal),
+                      bold: true,
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    });
 
     const children: (InstanceType<typeof Paragraph> | InstanceType<typeof Table>)[] = [
       new Paragraph({
@@ -338,10 +654,18 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
             }),
           ],
         }),
-        makeTable(group),
+        makeTable(code, group),
         new Paragraph("")
       );
     }
+
+    children.push(
+      new Paragraph({
+        heading: HeadingLevel.HEADING_1,
+        children: [new TextRun({ text: "Synthèse", bold: true })],
+      }),
+      summaryTable
+    );
 
     const doc = new Document({ sections: [{ children }] });
     const blob = await Packer.toBlob(doc);
@@ -349,189 +673,55 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
   }
 
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" disabled={busy || rows.length === 0}>
-            {busy ? (
-              <Loader2 className="animate-spin" aria-hidden="true" />
-            ) : (
-              <Download aria-hidden="true" />
-            )}
-            Exporter
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>
-            {rows.length} lauréat{rows.length > 1 ? "s" : ""}
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => openPreview("pdf")}>
-            <FileText aria-hidden="true" />
-            PDF (.pdf)
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => openPreview("word")}>
-            <FileType aria-hidden="true" />
-            Word (.docx)
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => openPreview("excel")}>
-            <FileSpreadsheet aria-hidden="true" />
-            Excel (.xlsx)
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => openPreview("csv")}>
-            <FileSpreadsheet aria-hidden="true" />
-            CSV (.csv)
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <Dialog
-        open={previewFormat !== null}
-        onOpenChange={(open) => {
-          if (!open) closePreview();
-        }}
-      >
-        <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>
-              Aperçu — export {previewFormat ? FORMAT_LABELS[previewFormat] : ""}
-            </DialogTitle>
-            <DialogDescription>
-              {rows.length} lauréat{rows.length > 1 ? "s" : ""} · {scopeLabel} ·
-              fichier {baseFilename(scopeLabel)}
-              {previewFormat ? FORMAT_EXTENSIONS[previewFormat] : ""}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="min-h-0 flex-1">
-            {previewFormat === "pdf" &&
-              (pdfUrl ? (
-                <iframe
-                  src={pdfUrl}
-                  title="Aperçu du document PDF"
-                  className="h-[60vh] w-full rounded-md border border-border"
-                />
-              ) : (
-                <div className="flex h-[60vh] items-center justify-center rounded-md border border-border">
-                  <Loader2
-                    className="size-6 animate-spin text-muted-foreground"
-                    aria-hidden="true"
-                  />
-                  <span className="sr-only">Génération de l&apos;aperçu…</span>
-                </div>
-              ))}
-
-            {previewFormat && previewFormat !== "pdf" && (
-              <ScrollArea className="h-[60vh] rounded-md border border-border">
-                <div className="p-4">
-                  <HtmlPreview rows={rows} format={previewFormat} />
-                </div>
-              </ScrollArea>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={closePreview} disabled={busy}>
-              Annuler
-            </Button>
-            <Button onClick={confirmDownload} disabled={busy}>
-              {busy ? (
-                <Loader2 className="animate-spin" aria-hidden="true" />
-              ) : (
-                <Download aria-hidden="true" />
-              )}
-              Télécharger{" "}
-              {previewFormat ? FORMAT_EXTENSIONS[previewFormat] : ""}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" disabled={busy || rows.length === 0}>
+          {busy ? (
+            <Loader2 className="animate-spin" aria-hidden="true" />
+          ) : (
+            <Download aria-hidden="true" />
+          )}
+          Exporter
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>
+          {rows.length} lauréat{rows.length > 1 ? "s" : ""}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => void run(FORMAT_LABELS.pdf, exportPdf)}
+        >
+          <FileText aria-hidden="true" />
+          PDF (.pdf)
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => void run(FORMAT_LABELS.word, exportWord)}
+        >
+          <FileType aria-hidden="true" />
+          Word (.docx)
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => void run(FORMAT_LABELS.excel, exportExcel)}
+        >
+          <FileSpreadsheet aria-hidden="true" />
+          Excel (.xlsx)
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => void run(FORMAT_LABELS.csv, exportCsv)}
+        >
+          <FileSpreadsheet aria-hidden="true" />
+          CSV (.csv)
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => void run("Étiquettes", exportLabels)}
+        >
+          <Tags aria-hidden="true" />
+          Étiquettes (.pdf)
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
-/** Faithful HTML rendering of what the exported file will contain: grouped
- *  prize tables for Word/Excel (one table per sheet/section), a flat table
- *  with a Prix column for CSV. */
-function HtmlPreview({
-  rows,
-  format,
-}: Readonly<{ rows: LaureateRow[]; format: "word" | "excel" | "csv" }>) {
-  if (format === "csv") {
-    const sorted = [...rows].sort(ceremonySort);
-    return (
-      <PreviewTable
-        headers={[...HEADERS, "Prix"]}
-        body={sorted.map((r, i) => [
-          ...rowCells(r, i),
-          r.awarded_prizes.map((c) => PRIZE_LABELS[c] ?? c).join(", "),
-        ])}
-      />
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-6">
-      {format === "word" && (
-        <div className="text-center">
-          <p className="text-lg font-bold text-foreground">REMISE DES PRIX</p>
-          <p className="text-sm text-muted-foreground">Liste des lauréats</p>
-        </div>
-      )}
-      {groupByPrize(rows).map(([code, group]) => (
-        <section key={code}>
-          <h3 className="mb-2 text-sm font-semibold text-foreground">
-            {PRIZE_LABELS[code] ?? code} ({group.length})
-            {format === "excel" && (
-              <span className="ml-2 font-normal text-muted-foreground">
-                — feuille dédiée
-              </span>
-            )}
-          </h3>
-          <PreviewTable
-            headers={HEADERS}
-            body={group.map((r, i) => rowCells(r, i))}
-          />
-        </section>
-      ))}
-    </div>
-  );
-}
-
-function PreviewTable({
-  headers,
-  body,
-}: Readonly<{ headers: string[]; body: (string | number)[][] }>) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-xs">
-        <thead>
-          <tr>
-            {headers.map((h) => (
-              <th
-                key={h}
-                className="border border-border bg-primary px-2 py-1.5 text-left font-semibold text-primary-foreground"
-              >
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {body.map((cells, rowIdx) => (
-            // Row order is stable for a given export snapshot
-             
-            <tr key={rowIdx} className="even:bg-muted/50">
-              {cells.map((cell, cellIdx) => (
-                 
-                <td key={cellIdx} className="border border-border px-2 py-1">
-                  {cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
