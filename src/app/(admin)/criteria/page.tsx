@@ -29,6 +29,7 @@ export default async function CriteriaPage() {
         columns={criteriaColumns}
         data={rows}
         pageSize={15}
+        showViewOptions
         filterFields={[
           {
             columnId: "prize_code",

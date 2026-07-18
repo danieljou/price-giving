@@ -78,9 +78,29 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
 
+  // DataTableFacetedFilter always stores its selection as a string[], which
+  // needs the "arrayIncludes" filter fn (row value in selection) rather than
+  // the column's default (e.g. "includesString", which breaks — and hides
+  // every row — as soon as 2+ checkboxes are selected). Applied here instead
+  // of per-column so any column wired to a checkbox filter gets it for free.
+  const facetedColumnIds = React.useMemo(
+    () => new Set(filterFields.map((f) => f.columnId)),
+    [filterFields]
+  );
+  const resolvedColumns = React.useMemo(() => {
+    if (facetedColumnIds.size === 0) return columns;
+    return columns.map((col) => {
+      const id = col.id ?? ("accessorKey" in col ? String(col.accessorKey) : undefined);
+      if (id && facetedColumnIds.has(id) && !col.filterFn) {
+        return { ...col, filterFn: "arrayIncludes" as const };
+      }
+      return col;
+    });
+  }, [columns, facetedColumnIds]);
+
   const table = useReactTable({
     data,
-    columns,
+    columns: resolvedColumns,
     state: { sorting, columnFilters, columnVisibility },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,

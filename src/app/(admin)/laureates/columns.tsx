@@ -101,6 +101,7 @@ export const laureateColumns: ColumnDef<LaureateRow>[] = [
   },
   {
     id: "actions",
+    enableHiding: false,
     header: () => <span className="sr-only">Actions</span>,
     cell: ({ row }) => (
       <Button

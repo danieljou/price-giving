@@ -79,6 +79,7 @@ export const studentResultColumns: ColumnDef<StudentResultRow>[] = [
   },
   {
     id: "actions",
+    enableHiding: false,
     header: "",
     cell: ({ row }) => (
       <Button variant="ghost" size="sm" asChild>

@@ -65,6 +65,7 @@ export const reviewColumns: ColumnDef<ReviewRow>[] = [
   },
   {
     id: "actions",
+    enableHiding: false,
     header: () => <span className="sr-only">Actions</span>,
     cell: ({ row }) => (
       <div className="flex items-center gap-1">
