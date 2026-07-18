@@ -77,6 +77,13 @@ interface ExportMenuProps {
   scopeLabel: string;
 }
 
+// jsPDF's standard fonts only support WinAnsi (roughly CP1252), which has no
+// glyph for "→" — it renders as garbage in the PDF export. Word/Excel/CSV use
+// real Unicode fonts so they keep the arrow untouched.
+function pdfSafe(text: string): string {
+  return text.replaceAll("→", "->");
+}
+
 function rowCells(row: LaureateRow, index: number): (string | number)[] {
   return [
     index + 1,
@@ -311,12 +318,12 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
                 styles: { fillColor: SEPARATOR_GRAY_RGB, minCellHeight: 2 },
               },
             ]
-          : rowCells(item.row, item.index).map(String)
+          : rowCells(item.row, item.index).map((c) => pdfSafe(String(c)))
       );
 
       autoTable(doc, {
         startY: y + 3,
-        head: [HEADERS],
+        head: [HEADERS.map(pdfSafe)],
         body,
         styles: { fontSize: 8, cellPadding: 2 },
         headStyles: {
