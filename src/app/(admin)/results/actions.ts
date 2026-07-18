@@ -20,7 +20,7 @@ function parseResultForm(formData: FormData) {
     niveau_admission: formData.get("niveau_admission"),
     classe_texte: formData.get("classe_texte") ?? undefined,
     moyenne: formData.get("moyenne") ?? undefined,
-    rang: formData.get("rang"),
+    rang: formData.get("rang") ?? undefined,
   });
 
   if (!parsed.success) {
