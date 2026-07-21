@@ -1,17 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { Check, Pencil, RotateCcw, StickyNote } from "lucide-react";
+import { Gavel, Pencil, RotateCcw, StickyNote } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { reopenManualReview, resolveManualReview } from "../results/actions";
+import type { PrizeCode } from "@/lib/supabase/types";
 
 const PRIZE_LABELS: Record<string, string> = {
   SPECIAL: "Prix Spécial",
@@ -19,6 +28,13 @@ const PRIZE_LABELS: Record<string, string> = {
   ENC: "Prix d'Encouragement",
   EXC_PLUS: "Prix d'Excellence+",
 };
+
+const DELIBERATION_PRIZE_OPTIONS: PrizeCode[] = [
+  "SPECIAL",
+  "EXC",
+  "ENC",
+  "EXC_PLUS",
+];
 
 export interface LaureateRow {
   id: string;
@@ -130,16 +146,37 @@ export const laureateColumns: ColumnDef<LaureateRow>[] = [
             >
               Décision à prendre
             </Badge>
-            <form action={resolveManualReview.bind(null, row.original.id)}>
-              <Button
-                type="submit"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Marquer comme délibéré"
-              >
-                <Check aria-hidden="true" />
-              </Button>
-            </form>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Délibérer"
+                >
+                  <Gavel aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Attribuer</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {DELIBERATION_PRIZE_OPTIONS.map((code) => (
+                  <DropdownMenuItem
+                    key={code}
+                    onClick={() =>
+                      void resolveManualReview(row.original.id, code)
+                    }
+                  >
+                    {PRIZE_LABELS[code]}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => void resolveManualReview(row.original.id, null)}
+                >
+                  Aucun prix
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         );
       }

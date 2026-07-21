@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { resultSchema } from "./schema";
 import { computeAwardedPrizes } from "./compute-helpers";
+import type { PrizeCode } from "@/lib/supabase/types";
 
 export interface ResultFormState {
   error?: string;
@@ -103,8 +104,34 @@ export async function updateResult(
   if ("error" in parsed) return parsed;
 
   const supabase = await createClient();
-  const { awarded_prizes, criteria_computed_at, manualReviewNotes } =
-    await computeAwardedPrizes(supabase, parsed);
+
+  const { data: existing } = await supabase
+    .from("results")
+    .select("manual_review_resolved")
+    .eq("id", resultId)
+    .single();
+
+  // A deliberated decision is frozen until an admin explicitly reopens it —
+  // otherwise saving an unrelated edit (or a bulk recompute) would silently
+  // overwrite a human call with the same "can't compute this" result.
+  let manualReviewNotes: string[] = [];
+  let prizeUpdate: {
+    awarded_prizes?: PrizeCode[];
+    manual_review_notes?: string[];
+    manual_review_resolved?: boolean;
+    criteria_computed_at?: string;
+  } = {};
+
+  if (!existing?.manual_review_resolved) {
+    const computed = await computeAwardedPrizes(supabase, parsed);
+    manualReviewNotes = computed.manualReviewNotes;
+    prizeUpdate = {
+      awarded_prizes: computed.awarded_prizes,
+      manual_review_notes: computed.manualReviewNotes,
+      manual_review_resolved: false,
+      criteria_computed_at: computed.criteria_computed_at,
+    };
+  }
 
   const { error } = await supabase
     .from("results")
@@ -116,10 +143,7 @@ export async function updateResult(
       moyenne: parsed.moyenne,
       rang: parsed.rang,
       notes: parsed.notes,
-      awarded_prizes,
-      manual_review_notes: manualReviewNotes,
-      manual_review_resolved: false,
-      criteria_computed_at,
+      ...prizeUpdate,
     })
     .eq("id", resultId);
 
@@ -143,11 +167,15 @@ export async function recomputeYear(schoolYearId: string) {
   const { data: results } = await supabase
     .from("results")
     .select(
-      "id, student_id, school_year_id, section, niveau_depart, niveau_admission, moyenne, rang"
+      "id, student_id, school_year_id, section, niveau_depart, niveau_admission, moyenne, rang, manual_review_resolved"
     )
     .eq("school_year_id", schoolYearId);
 
   for (const result of results ?? []) {
+    // Frozen: a deliberated decision survives a bulk recompute unless
+    // explicitly reopened.
+    if (result.manual_review_resolved) continue;
+
     const { awarded_prizes, criteria_computed_at, manualReviewNotes } =
       await computeAwardedPrizes(supabase, {
         studentId: result.student_id,
@@ -175,27 +203,34 @@ export async function recomputeYear(schoolYearId: string) {
   revalidatePath("/review");
 }
 
-/** Marks a result as decided ("délibéré") — removes it from the manual-review
- *  queue and clears the "Décision à prendre" badge, but keeps the original
- *  notes so the decision can be reopened later instead of being destroyed. */
-export async function resolveManualReview(resultId: string) {
+/** Marks a result as decided ("délibéré"): assigns the chosen prize (or none)
+ *  and removes it from the manual-review queue. Frozen against recomputation
+ *  until reopened — see updateResult/recomputeYear. */
+export async function resolveManualReview(
+  resultId: string,
+  prizeCode: PrizeCode | null
+) {
   const supabase = await createClient();
   await supabase
     .from("results")
-    .update({ manual_review_resolved: true })
+    .update({
+      awarded_prizes: prizeCode ? [prizeCode] : [],
+      manual_review_resolved: true,
+    })
     .eq("id", resultId);
 
   revalidatePath("/review");
   revalidatePath("/laureates");
 }
 
-/** Undoes resolveManualReview — puts a already-decided result back into the
- *  manual-review queue so admins can go back and forth on a decision. */
+/** Undoes resolveManualReview — clears the manually-assigned prize and puts
+ *  the result back into the manual-review queue so admins can go back and
+ *  forth on a decision. */
 export async function reopenManualReview(resultId: string) {
   const supabase = await createClient();
   await supabase
     .from("results")
-    .update({ manual_review_resolved: false })
+    .update({ awarded_prizes: [], manual_review_resolved: false })
     .eq("id", resultId);
 
   revalidatePath("/review");
