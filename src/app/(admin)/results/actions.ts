@@ -69,6 +69,7 @@ export async function createResult(
     notes: parsed.notes,
     awarded_prizes,
     manual_review_notes: manualReviewNotes,
+    manual_review_resolved: false,
     criteria_computed_at,
   });
 
@@ -117,6 +118,7 @@ export async function updateResult(
       notes: parsed.notes,
       awarded_prizes,
       manual_review_notes: manualReviewNotes,
+      manual_review_resolved: false,
       criteria_computed_at,
     })
     .eq("id", resultId);
@@ -162,6 +164,7 @@ export async function recomputeYear(schoolYearId: string) {
       .update({
         awarded_prizes,
         manual_review_notes: manualReviewNotes,
+        manual_review_resolved: false,
         criteria_computed_at,
       })
       .eq("id", result.id);
@@ -172,14 +175,29 @@ export async function recomputeYear(schoolYearId: string) {
   revalidatePath("/review");
 }
 
-/** Dismisses a result from the manual-review queue once an admin has looked
- *  at it — clears the stored notes without touching the awarded prizes. */
+/** Marks a result as decided ("délibéré") — removes it from the manual-review
+ *  queue and clears the "Décision à prendre" badge, but keeps the original
+ *  notes so the decision can be reopened later instead of being destroyed. */
 export async function resolveManualReview(resultId: string) {
   const supabase = await createClient();
   await supabase
     .from("results")
-    .update({ manual_review_notes: [] })
+    .update({ manual_review_resolved: true })
     .eq("id", resultId);
 
   revalidatePath("/review");
+  revalidatePath("/laureates");
+}
+
+/** Undoes resolveManualReview — puts a already-decided result back into the
+ *  manual-review queue so admins can go back and forth on a decision. */
+export async function reopenManualReview(resultId: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("results")
+    .update({ manual_review_resolved: false })
+    .eq("id", resultId);
+
+  revalidatePath("/review");
+  revalidatePath("/laureates");
 }

@@ -68,6 +68,8 @@ export async function computeAwardedPrizes(
     rang: input.rang,
     matchingCriteria: matchingCriteria ?? [],
     previousYearAwardedPrizes,
+    niveauDepart: input.niveauDepart,
+    niveauAdmission: input.niveauAdmission,
   });
 
   return {

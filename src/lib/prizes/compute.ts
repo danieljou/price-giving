@@ -9,6 +9,9 @@ export interface ComputePrizesInput {
   matchingCriteria: CriteriaRow[];
   /** Prizes awarded to the same student for the immediately preceding school year, or null if none. */
   previousYearAwardedPrizes: PrizeCode[] | null;
+  /** Only used to name the transition in the manual-review note when no criteria match it at all. */
+  niveauDepart: string;
+  niveauAdmission: string | null;
 }
 
 export interface ComputePrizesResult {
@@ -46,6 +49,17 @@ function matchesThreshold(
 export function computePrizes(input: ComputePrizesInput): ComputePrizesResult {
   const awarded = new Set<PrizeCode>();
   const manualReviewNotes: string[] = [];
+
+  if (input.matchingCriteria.length === 0) {
+    // Distinct from "computed, no prize deserved": nothing in critères.json
+    // covers this exact (section, niveau_depart, niveau_admission) transition
+    // at all, so silently awarding nothing would be indistinguishable from a
+    // real "no" — flag it instead so an admin can decide.
+    manualReviewNotes.push(
+      `Aucun critère défini pour ce parcours (${input.niveauDepart} → ${input.niveauAdmission ?? "(fin)"})`
+    );
+    return { awardedPrizes: [], manualReviewNotes };
+  }
 
   for (const row of input.matchingCriteria) {
     if (row.auto_qualify) {

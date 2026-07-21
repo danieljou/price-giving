@@ -9,6 +9,7 @@ import { recomputeYear } from "../results/actions";
 import { laureateColumns, type LaureateRow } from "./columns";
 import { ExportMenu } from "./export-menu";
 import { LaureatesFilters } from "./laureates-filters";
+import { StatsSheet } from "./stats-sheet";
 import { SummaryTable } from "./summary-table";
 
 interface SchoolYearRow {
@@ -30,6 +31,7 @@ interface ResultRow {
   rang: number | null;
   awarded_prizes: string[];
   manual_review_notes: string[];
+  manual_review_resolved: boolean;
   notes: string | null;
   section: string;
   students: StudentRow | StudentRow[] | null;
@@ -84,7 +86,7 @@ export default async function LaureatesPage({
   let query = supabase
     .from("results")
     .select(
-      "id, niveau_depart, niveau_admission, classe_texte, moyenne, rang, awarded_prizes, manual_review_notes, notes, section, students(first_name, last_name), school_years!inner(label, start_year)"
+      "id, niveau_depart, niveau_admission, classe_texte, moyenne, rang, awarded_prizes, manual_review_notes, manual_review_resolved, notes, section, students(first_name, last_name), school_years!inner(label, start_year)"
     );
 
   if (effectiveYear) query = query.eq("school_year_id", effectiveYear);
@@ -95,7 +97,8 @@ export default async function LaureatesPage({
   if (filters.prize === "PENDING") {
     query = query
       .eq("awarded_prizes", [])
-      .not("manual_review_notes", "eq", "{}");
+      .not("manual_review_notes", "eq", "{}")
+      .eq("manual_review_resolved", false);
   } else if (filters.prize) {
     query = query.contains("awarded_prizes", [filters.prize]);
   }
@@ -114,7 +117,12 @@ export default async function LaureatesPage({
         moyenne: r.moyenne,
         rang: r.rang,
         awarded_prizes: r.awarded_prizes,
-        pending_review: r.awarded_prizes.length === 0 && r.manual_review_notes.length > 0,
+        pending_review:
+          r.awarded_prizes.length === 0 &&
+          r.manual_review_notes.length > 0 &&
+          !r.manual_review_resolved,
+        deliberated:
+          r.manual_review_notes.length > 0 && r.manual_review_resolved,
         notes: r.notes,
         section: r.section,
         student_name: student
@@ -151,6 +159,7 @@ export default async function LaureatesPage({
             </Button>
           </form>
         )}
+        <StatsSheet rows={rows} scopeLabel={scopeLabel} />
         <ExportMenu rows={rows} scopeLabel={scopeLabel} />
       </PageHeader>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil, StickyNote } from "lucide-react";
+import { Check, Pencil, RotateCcw, StickyNote } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { reopenManualReview, resolveManualReview } from "../results/actions";
 
 const PRIZE_LABELS: Record<string, string> = {
   SPECIAL: "Prix Spécial",
@@ -30,6 +31,8 @@ export interface LaureateRow {
   awarded_prizes: string[];
   /** True when nothing was auto-awarded but a criterion needs a human call (e.g. an exam-pass condition like BEPC/PROBATOIRE/BACC not present in yearly data). */
   pending_review: boolean;
+  /** True once an admin has marked a manual-review result as decided (reversible via reopenManualReview). */
+  deliberated: boolean;
   notes: string | null;
   section: string;
   student_name: string;
@@ -106,8 +109,8 @@ export const laureateColumns: ColumnDef<LaureateRow>[] = [
   {
     id: "prizes",
     header: "Prix",
-    cell: ({ row }) =>
-      row.original.awarded_prizes.length > 0 ? (
+    cell: ({ row }) => {
+      const prizeBadges = row.original.awarded_prizes.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {row.original.awarded_prizes.map((code) => (
             <Badge key={code} variant="secondary">
@@ -115,13 +118,55 @@ export const laureateColumns: ColumnDef<LaureateRow>[] = [
             </Badge>
           ))}
         </div>
-      ) : row.original.pending_review ? (
-        <Badge variant="outline" className="border-amber-500 text-amber-600 dark:text-amber-400">
-          Décision à prendre
-        </Badge>
-      ) : (
-        <span className="text-muted-foreground">—</span>
-      ),
+      );
+
+      if (row.original.pending_review) {
+        return (
+          <div className="flex items-center gap-1.5">
+            {prizeBadges}
+            <Badge
+              variant="outline"
+              className="border-amber-500 text-amber-600 dark:text-amber-400"
+            >
+              Décision à prendre
+            </Badge>
+            <form action={resolveManualReview.bind(null, row.original.id)}>
+              <Button
+                type="submit"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Marquer comme délibéré"
+              >
+                <Check aria-hidden="true" />
+              </Button>
+            </form>
+          </div>
+        );
+      }
+
+      if (row.original.deliberated) {
+        return (
+          <div className="flex items-center gap-1.5">
+            {prizeBadges}
+            <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400">
+              Délibéré
+            </Badge>
+            <form action={reopenManualReview.bind(null, row.original.id)}>
+              <Button
+                type="submit"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Revenir à non délibéré"
+              >
+                <RotateCcw aria-hidden="true" />
+              </Button>
+            </form>
+          </div>
+        );
+      }
+
+      return prizeBadges || <span className="text-muted-foreground">—</span>;
+    },
   },
   {
     id: "notes",

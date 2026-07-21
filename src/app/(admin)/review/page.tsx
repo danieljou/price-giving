@@ -34,7 +34,8 @@ export default async function ReviewPage() {
     .select(
       "id, section, niveau_depart, niveau_admission, manual_review_notes, students(first_name, last_name), school_years(label)"
     )
-    .not("manual_review_notes", "eq", "{}");
+    .not("manual_review_notes", "eq", "{}")
+    .eq("manual_review_resolved", false);
 
   const rows: ReviewRow[] = ((data ?? []) as unknown as ResultRow[]).map(
     (r) => {
