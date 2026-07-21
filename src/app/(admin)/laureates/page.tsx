@@ -1,28 +1,15 @@
-import Link from "next/link";
 import { RefreshCw } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/data-table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { PageHeader } from "@/components/page-header";
 import { pickDefaultSchoolYear } from "@/lib/school-year";
+import type { Section } from "@/lib/supabase/types";
 import { recomputeYear } from "../results/actions";
 import { laureateColumns, type LaureateRow } from "./columns";
 import { ExportMenu } from "./export-menu";
-
-const PRIZE_LABELS: Record<string, string> = {
-  SPECIAL: "Prix Spécial",
-  EXC: "Prix d'Excellence",
-  ENC: "Prix d'Encouragement",
-  EXC_PLUS: "Prix d'Excellence+",
-};
+import { LaureatesFilters } from "./laureates-filters";
+import { SummaryTable } from "./summary-table";
 
 interface SchoolYearRow {
   label: string;
@@ -42,6 +29,8 @@ interface ResultRow {
   moyenne: number;
   rang: number | null;
   awarded_prizes: string[];
+  manual_review_notes: string[];
+  notes: string | null;
   section: string;
   students: StudentRow | StudentRow[] | null;
   school_years: SchoolYearRow | SchoolYearRow[] | null;
@@ -69,6 +58,19 @@ export default async function LaureatesPage({
     .select("id, label, start_year")
     .order("start_year", { ascending: false });
 
+  const { data: niveauxData } = await supabase
+    .from("niveaux")
+    .select("section, code, progression_order")
+    .order("progression_order");
+
+  const niveauxBySection: Record<Section, string[]> = {
+    francophone: [],
+    anglophone: [],
+  };
+  for (const n of niveauxData ?? []) {
+    niveauxBySection[n.section].push(n.code);
+  }
+
   // Default view: the current academic year (or the latest available).
   // "all" is the explicit opt-out carried in the URL.
   const defaultYearId = pickDefaultSchoolYear(schoolYears ?? [])?.id;
@@ -82,16 +84,21 @@ export default async function LaureatesPage({
   let query = supabase
     .from("results")
     .select(
-      "id, niveau_depart, niveau_admission, classe_texte, moyenne, rang, awarded_prizes, section, students(first_name, last_name), school_years!inner(label, start_year)"
-    )
-    .not("awarded_prizes", "eq", "{}");
+      "id, niveau_depart, niveau_admission, classe_texte, moyenne, rang, awarded_prizes, manual_review_notes, notes, section, students(first_name, last_name), school_years!inner(label, start_year)"
+    );
 
   if (effectiveYear) query = query.eq("school_year_id", effectiveYear);
   if (filters.section === "francophone" || filters.section === "anglophone") {
     query = query.eq("section", filters.section);
   }
   if (filters.niveau) query = query.eq("niveau_depart", filters.niveau);
-  if (filters.prize) query = query.contains("awarded_prizes", [filters.prize]);
+  if (filters.prize === "PENDING") {
+    query = query
+      .eq("awarded_prizes", [])
+      .not("manual_review_notes", "eq", "{}");
+  } else if (filters.prize) {
+    query = query.contains("awarded_prizes", [filters.prize]);
+  }
 
   const { data: results } = await query.order("niveau_depart");
 
@@ -107,6 +114,8 @@ export default async function LaureatesPage({
         moyenne: r.moyenne,
         rang: r.rang,
         awarded_prizes: r.awarded_prizes,
+        pending_review: r.awarded_prizes.length === 0 && r.manual_review_notes.length > 0,
+        notes: r.notes,
         section: r.section,
         student_name: student
           ? `${student.last_name} ${student.first_name}`
@@ -132,7 +141,7 @@ export default async function LaureatesPage({
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Lauréats"
-        description={`${rows.length} lauréat${rows.length > 1 ? "s" : ""} pour les filtres actuels`}
+        description={`${rows.length} résultat${rows.length > 1 ? "s" : ""} pour les filtres actuels`}
       >
         {recomputeCurrentYear && (
           <form action={recomputeCurrentYear}>
@@ -145,61 +154,14 @@ export default async function LaureatesPage({
         <ExportMenu rows={rows} scopeLabel={scopeLabel} />
       </PageHeader>
 
-      <form method="GET" className="flex flex-wrap items-end gap-3">
-        <Select name="year" defaultValue={effectiveYear ?? "all"}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Année" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes les années</SelectItem>
-            {schoolYears?.map((y) => (
-              <SelectItem key={y.id} value={y.id}>
-                {y.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <LaureatesFilters
+        schoolYears={schoolYears ?? []}
+        niveauxBySection={niveauxBySection}
+        effectiveYear={effectiveYear}
+        filters={filters}
+      />
 
-        <Select name="section" defaultValue={filters.section ?? ""}>
-          <SelectTrigger className="w-42.5">
-            <SelectValue placeholder="Toutes les sections" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="francophone">Francophone</SelectItem>
-            <SelectItem value="anglophone">Anglophone</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select name="prize" defaultValue={filters.prize ?? ""}>
-          <SelectTrigger className="w-42.5">
-            <SelectValue placeholder="Tous les prix" />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(PRIZE_LABELS).map(([code, label]) => (
-              <SelectItem key={code} value={code}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Input
-          name="niveau"
-          placeholder="Niveau de départ"
-          defaultValue={filters.niveau ?? ""}
-          className="w-45"
-        />
-
-        <Button type="submit">Filtrer</Button>
-        {(filters.year ||
-          filters.section ||
-          filters.prize ||
-          filters.niveau) && (
-          <Button variant="ghost" asChild>
-            <Link href="/laureates">Réinitialiser</Link>
-          </Button>
-        )}
-      </form>
+      <SummaryTable rows={rows} />
 
       <DataTable
         columns={laureateColumns}

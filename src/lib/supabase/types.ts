@@ -104,6 +104,7 @@ export interface Database {
           rang: number | null;
           awarded_prizes: PrizeCode[];
           manual_review_notes: string[];
+          notes: string | null;
           criteria_computed_at: string | null;
           created_at: string;
           updated_at: string;
@@ -120,6 +121,7 @@ export interface Database {
           rang?: number | null;
           awarded_prizes?: PrizeCode[];
           manual_review_notes?: string[];
+          notes?: string | null;
           criteria_computed_at?: string | null;
           created_at?: string;
           updated_at?: string;

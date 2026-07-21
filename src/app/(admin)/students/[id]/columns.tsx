@@ -1,10 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { StickyNote } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const PRIZE_LABELS: Record<string, string> = {
   SPECIAL: "Prix Spécial",
@@ -21,6 +27,7 @@ export interface StudentResultRow {
   niveau_admission: string | null;
   classe_texte: string | null;
   awarded_prizes: string[];
+  notes: string | null;
   school_year_label: string;
 }
 
@@ -76,6 +83,24 @@ export const studentResultColumns: ColumnDef<StudentResultRow>[] = [
       ) : (
         <span className="text-muted-foreground">—</span>
       ),
+  },
+  {
+    id: "notes",
+    header: () => <span className="sr-only">Notes</span>,
+    cell: ({ row }) =>
+      row.original.notes ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <StickyNote
+              className="h-4 w-4 text-muted-foreground"
+              aria-label="Notes"
+            />
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs whitespace-pre-wrap text-left">
+            {row.original.notes}
+          </TooltipContent>
+        </Tooltip>
+      ) : null,
   },
   {
     id: "actions",

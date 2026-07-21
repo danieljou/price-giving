@@ -30,6 +30,10 @@ export const resultSchema = z.object({
       (v) => !v || (isNumberString(v) && Number.isInteger(Number(v)) && Number(v) > 0),
       { error: "Le rang doit être un nombre entier positif." }
     ),
+  notes: z
+    .string()
+    .max(2000, { error: "2000 caractères maximum." })
+    .optional(),
 });
 
 // Form values are plain strings (as native inputs/selects produce) so RHF's

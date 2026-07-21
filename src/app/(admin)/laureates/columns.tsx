@@ -1,11 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil } from "lucide-react";
+import { Pencil, StickyNote } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const PRIZE_LABELS: Record<string, string> = {
   SPECIAL: "Prix Spécial",
@@ -23,6 +28,9 @@ export interface LaureateRow {
   moyenne: number | null;
   rang: number | null;
   awarded_prizes: string[];
+  /** True when nothing was auto-awarded but a criterion needs a human call (e.g. an exam-pass condition like BEPC/PROBATOIRE/BACC not present in yearly data). */
+  pending_review: boolean;
+  notes: string | null;
   section: string;
   student_name: string;
   school_year_label: string;
@@ -37,6 +45,15 @@ export function classeDisplay(row: LaureateRow): string {
 }
 
 export const laureateColumns: ColumnDef<LaureateRow>[] = [
+  {
+    id: "index",
+    header: "N°",
+    enableHiding: false,
+    enableSorting: false,
+    cell: ({ row }) => (
+      <span className="font-mono text-muted-foreground">{row.index + 1}</span>
+    ),
+  },
   {
     accessorKey: "student_name",
     header: ({ column }) => (
@@ -89,15 +106,40 @@ export const laureateColumns: ColumnDef<LaureateRow>[] = [
   {
     id: "prizes",
     header: "Prix",
-    cell: ({ row }) => (
-      <div className="flex flex-wrap gap-1">
-        {row.original.awarded_prizes.map((code) => (
-          <Badge key={code} variant="secondary">
-            {PRIZE_LABELS[code] ?? code}
-          </Badge>
-        ))}
-      </div>
-    ),
+    cell: ({ row }) =>
+      row.original.awarded_prizes.length > 0 ? (
+        <div className="flex flex-wrap gap-1">
+          {row.original.awarded_prizes.map((code) => (
+            <Badge key={code} variant="secondary">
+              {PRIZE_LABELS[code] ?? code}
+            </Badge>
+          ))}
+        </div>
+      ) : row.original.pending_review ? (
+        <Badge variant="outline" className="border-amber-500 text-amber-600 dark:text-amber-400">
+          Décision à prendre
+        </Badge>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      ),
+  },
+  {
+    id: "notes",
+    header: () => <span className="sr-only">Notes</span>,
+    cell: ({ row }) =>
+      row.original.notes ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <StickyNote
+              className="h-4 w-4 text-muted-foreground"
+              aria-label="Notes"
+            />
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs whitespace-pre-wrap text-left">
+            {row.original.notes}
+          </TooltipContent>
+        </Tooltip>
+      ) : null,
   },
   {
     id: "actions",

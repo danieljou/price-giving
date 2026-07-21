@@ -21,6 +21,7 @@ function parseResultForm(formData: FormData) {
     classe_texte: formData.get("classe_texte") ?? undefined,
     moyenne: formData.get("moyenne") ?? undefined,
     rang: formData.get("rang") ?? undefined,
+    notes: formData.get("notes") ?? undefined,
   });
 
   if (!parsed.success) {
@@ -42,6 +43,7 @@ function parseResultForm(formData: FormData) {
     classeTexte: parsed.data.classe_texte?.trim() || null,
     moyenne: parsed.data.moyenne ? Number(parsed.data.moyenne) : null,
     rang: parsed.data.rang ? Number(parsed.data.rang) : null,
+    notes: parsed.data.notes?.trim() || null,
   };
 }
 
@@ -64,6 +66,7 @@ export async function createResult(
     classe_texte: parsed.classeTexte,
     moyenne: parsed.moyenne,
     rang: parsed.rang,
+    notes: parsed.notes,
     awarded_prizes,
     manual_review_notes: manualReviewNotes,
     criteria_computed_at,
@@ -111,6 +114,7 @@ export async function updateResult(
       classe_texte: parsed.classeTexte,
       moyenne: parsed.moyenne,
       rang: parsed.rang,
+      notes: parsed.notes,
       awarded_prizes,
       manual_review_notes: manualReviewNotes,
       criteria_computed_at,
