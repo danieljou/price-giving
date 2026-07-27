@@ -41,7 +41,7 @@ export default async function EtatsPage({ searchParams }: Readonly<PageProps>) {
   const sessionId = filters.session ?? pickDefaultSchoolYear(years)?.id;
   const sessionLabel = years.find((y) => y.id === sessionId)?.label ?? "—";
 
-  let configDetail: ConfigDetailRow[] = [];
+  const configDetail: ConfigDetailRow[] = [];
   let articleSummary: ArticleSummaryRow[] = [];
   let depenseRows: DepenseExportRow[] = [];
   let recap = { totalBeneficiaires: 0, budgetPrimes: 0, depensesComplementaires: 0, budgetGlobal: 0 };

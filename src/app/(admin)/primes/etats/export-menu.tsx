@@ -32,15 +32,6 @@ function baseFilename(scopeLabel: string): string {
   return `primes-${scopeLabel.replaceAll(/[^\w-]+/g, "-")}`;
 }
 
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
-
 export function ExportMenu({
   scopeLabel,
   configDetail,

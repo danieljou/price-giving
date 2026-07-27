@@ -21,13 +21,14 @@ import {
 import { pickDefaultSchoolYear } from "@/lib/school-year";
 import { configCost } from "@/lib/primes/cost";
 import { formatMontant } from "@/lib/primes/format";
+import { typePrimeBadgeClass, typePrimeIcon } from "@/lib/primes/prize-visuals";
 import type { Section } from "@/lib/supabase/types";
 
 interface PageProps {
   searchParams: Promise<{ session?: string; section?: string }>;
 }
 
-export default async function ConfigurationPage({ searchParams }: PageProps) {
+export default async function ConfigurationPage({ searchParams }: Readonly<PageProps>) {
   const filters = await searchParams;
   const supabase = await createClient();
 
@@ -143,11 +144,19 @@ export default async function ConfigurationPage({ searchParams }: PageProps) {
             <TableHeader>
               <TableRow className="bg-muted/40 hover:bg-muted/40">
                 <TableHead className="whitespace-nowrap">Niveau</TableHead>
-                {types.map((t) => (
-                  <TableHead key={t.id} className="whitespace-nowrap">
-                    {t.libelle}
-                  </TableHead>
-                ))}
+                {types.map((t) => {
+                  const Icon = typePrimeIcon(t.code);
+                  return (
+                    <TableHead key={t.id} className="whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 ${typePrimeBadgeClass(t.code)}`}
+                      >
+                        <Icon className="size-3.5" aria-hidden="true" />
+                        {t.libelle}
+                      </span>
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -161,7 +170,7 @@ export default async function ConfigurationPage({ searchParams }: PageProps) {
                     return (
                       <TableCell key={type.id}>
                         <Link
-                          href={`/primes/configuration/${niveau.id}/${type.id}?session=${sessionId}&section=${section}`}
+                          href={`/primes/configuration/${niveau.id}?session=${sessionId}&section=${section}&type=${type.id}`}
                           className="block rounded-sm px-2 py-1.5 text-xs hover:bg-muted"
                         >
                           {cell ? (
