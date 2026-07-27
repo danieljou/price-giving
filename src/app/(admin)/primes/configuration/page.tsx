@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -22,10 +23,9 @@ import { pickDefaultSchoolYear } from "@/lib/school-year";
 import { configCost } from "@/lib/primes/cost";
 import { formatMontant } from "@/lib/primes/format";
 import { typePrimeBadgeClass, typePrimeIcon } from "@/lib/primes/prize-visuals";
-import type { Section } from "@/lib/supabase/types";
 
 interface PageProps {
-  searchParams: Promise<{ session?: string; section?: string }>;
+  searchParams: Promise<{ session?: string }>;
 }
 
 export default async function ConfigurationPage({ searchParams }: Readonly<PageProps>) {
@@ -47,14 +47,12 @@ export default async function ConfigurationPage({ searchParams }: Readonly<PageP
   const years = schoolYears ?? [];
   const types = typesPrimes ?? [];
   const sessionId = filters.session ?? pickDefaultSchoolYear(years)?.id;
-  const section: Section =
-    filters.section === "anglophone" ? "anglophone" : "francophone";
 
   const { data: niveaux } = await supabase
     .from("niveaux")
     .select("id, section, code, progression_order")
-    .eq("section", section)
-    .order("progression_order");
+    .order("progression_order")
+    .order("section");
 
   const niveauRows = niveaux ?? [];
 
@@ -96,7 +94,7 @@ export default async function ConfigurationPage({ searchParams }: Readonly<PageP
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Configuration des primes"
-        description="Composez la prime de chaque niveau pour la session sélectionnée. Cliquez sur une cellule pour ajouter des articles, ajuster les quantités et les prix."
+        description="Composez la prime de chaque niveau (francophone et anglophone) pour la session sélectionnée. Cliquez sur une cellule pour ajouter des articles, ajuster les quantités et les prix."
       />
 
       <form method="GET" className="flex flex-wrap items-end gap-3">
@@ -113,16 +111,6 @@ export default async function ConfigurationPage({ searchParams }: Readonly<PageP
           </SelectContent>
         </Select>
 
-        <Select name="section" defaultValue={section}>
-          <SelectTrigger className="w-42.5">
-            <SelectValue placeholder="Section" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="francophone">Francophone</SelectItem>
-            <SelectItem value="anglophone">Anglophone</SelectItem>
-          </SelectContent>
-        </Select>
-
         <Button type="submit">Afficher</Button>
       </form>
 
@@ -135,7 +123,7 @@ export default async function ConfigurationPage({ searchParams }: Readonly<PageP
       ) : niveauRows.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            Aucun niveau défini pour cette section.
+            Aucun niveau défini.
           </CardContent>
         </Card>
       ) : (
@@ -163,14 +151,19 @@ export default async function ConfigurationPage({ searchParams }: Readonly<PageP
               {niveauRows.map((niveau) => (
                 <TableRow key={niveau.id}>
                   <TableCell className="font-medium text-foreground">
-                    {niveau.code}
+                    <div className="flex items-center gap-2">
+                      {niveau.code}
+                      <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground">
+                        {niveau.section === "francophone" ? "Franco." : "Anglo."}
+                      </Badge>
+                    </div>
                   </TableCell>
                   {types.map((type) => {
                     const cell = cellByKey.get(`${niveau.id}:${type.id}`);
                     return (
                       <TableCell key={type.id}>
                         <Link
-                          href={`/primes/configuration/${niveau.id}?session=${sessionId}&section=${section}&type=${type.id}`}
+                          href={`/primes/configuration/${niveau.id}?session=${sessionId}&type=${type.id}`}
                           className="block rounded-sm px-2 py-1.5 text-xs hover:bg-muted"
                         >
                           {cell ? (

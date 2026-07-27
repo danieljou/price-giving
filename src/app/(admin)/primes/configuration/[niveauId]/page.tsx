@@ -11,7 +11,7 @@ import type { CompositionLine } from "./lines-table";
 
 interface PageProps {
   params: Promise<{ niveauId: string }>;
-  searchParams: Promise<{ session?: string; section?: string; type?: string }>;
+  searchParams: Promise<{ session?: string; type?: string }>;
 }
 
 interface LineJoinRow {
@@ -35,7 +35,7 @@ export default async function NiveauConfigurationPage({
   searchParams,
 }: Readonly<PageProps>) {
   const { niveauId } = await params;
-  const { session: sessionId, section, type: requestedTypeId } = await searchParams;
+  const { session: sessionId, type: requestedTypeId } = await searchParams;
 
   if (!sessionId) redirect("/primes/configuration");
 
@@ -139,9 +139,7 @@ export default async function NiveauConfigurationPage({
         description={`Session ${sessionRow.label} — composez chaque type de prime pour ce niveau depuis les onglets ci-dessous.`}
       >
         <Button variant="outline" asChild>
-          <Link
-            href={`/primes/configuration?session=${sessionRow.id}&section=${section ?? niveau.section}`}
-          >
+          <Link href={`/primes/configuration?session=${sessionRow.id}`}>
             <ArrowLeft aria-hidden="true" />
             Retour à la configuration
           </Link>
