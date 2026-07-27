@@ -48,6 +48,7 @@ export default async function StudentsPage() {
         }
         searchKey="last_name"
         searchPlaceholder="Rechercher un nom..."
+        showViewOptions
         filterFields={[
           {
             columnId: "section",

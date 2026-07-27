@@ -23,6 +23,9 @@ type NiveauMap = Record<string, Record<string, number>>;
 const NIVEAU_ORDER: NiveauMap = {
   francophone: {
     JARDIN: 1,
+    PS: 1,
+    MS: 1,
+    GS: 1,
     SIL: 2,
     CPS: 2,
     CP: 3,
@@ -48,6 +51,9 @@ const NIVEAU_ORDER: NiveauMap = {
   },
   anglophone: {
     JARDIN: 1,
+    PN: 1,
+    N1: 1,
+    N2: 1,
     "CLASS 1": 2,
     CPS: 2,
     "CLASS 2": 3,

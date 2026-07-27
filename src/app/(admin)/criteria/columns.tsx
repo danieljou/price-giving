@@ -122,6 +122,7 @@ export const criteriaColumns: ColumnDef<CriterionRow>[] = [
   },
   {
     id: "actions",
+    enableHiding: false,
     header: () => <span className="sr-only">Actions</span>,
     cell: ({ row }) => <CriterionEditDialog criterion={row.original} />,
   },

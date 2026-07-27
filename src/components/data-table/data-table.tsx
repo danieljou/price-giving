@@ -12,6 +12,7 @@ import {
   useReactTable,
   type ColumnDef,
   type ColumnFiltersState,
+  type Row,
   type RowData,
   type SortingState,
   type VisibilityState,
@@ -78,9 +79,34 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
 
+  // DataTableFacetedFilter always stores its selection as a string[], which
+  // needs an "is the row's value one of the selected options" filter rather
+  // than the column's default (e.g. "includesString", which breaks — and
+  // hides every row — as soon as 2+ checkboxes are selected). Applied here
+  // instead of per-column so any column wired to a checkbox filter gets it
+  // for free (mirrors the manual filterFn already used in criteria/columns.tsx).
+  const facetedColumnIds = React.useMemo(
+    () => new Set(filterFields.map((f) => f.columnId)),
+    [filterFields]
+  );
+  const resolvedColumns = React.useMemo(() => {
+    if (facetedColumnIds.size === 0) return columns;
+    return columns.map((col) => {
+      const id = col.id ?? ("accessorKey" in col ? String(col.accessorKey) : undefined);
+      if (id && facetedColumnIds.has(id) && !col.filterFn) {
+        return {
+          ...col,
+          filterFn: (row: Row<TData>, columnId: string, value: string[]) =>
+            value.includes(row.getValue(columnId)),
+        };
+      }
+      return col;
+    });
+  }, [columns, facetedColumnIds]);
+
   const table = useReactTable({
     data,
-    columns,
+    columns: resolvedColumns,
     state: { sorting, columnFilters, columnVisibility },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,

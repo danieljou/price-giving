@@ -5,7 +5,16 @@
  * kindergarten up through university, exam labels included.
  */
 export const NIVEAU_ORDER: Record<string, number> = {
+  // JARDIN is the legacy catch-all for maternelle; PS/MS/GS (francophone) and
+  // PN/N1/N2 (anglophone) are the actual grade-by-grade classes within it —
+  // kept at the same tier since they don't need to sort against each other.
   JARDIN: 1,
+  PS: 1,
+  MS: 1,
+  GS: 1,
+  PN: 1,
+  N1: 1,
+  N2: 1,
   SIL: 2,
   "CLASS 1": 2,
   CPS: 2,

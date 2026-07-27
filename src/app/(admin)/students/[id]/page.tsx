@@ -27,7 +27,7 @@ export default async function StudentDetailPage({
   const { data: results } = await supabase
     .from("results")
     .select(
-      "id, moyenne, rang, niveau_depart, niveau_admission, classe_texte, awarded_prizes, school_years(label, start_year)"
+      "id, moyenne, rang, niveau_depart, niveau_admission, classe_texte, awarded_prizes, notes, school_years(label, start_year)"
     )
     .eq("student_id", id)
     .order("school_years(start_year)", { ascending: false });
@@ -44,6 +44,7 @@ export default async function StudentDetailPage({
       niveau_admission: r.niveau_admission,
       classe_texte: r.classe_texte,
       awarded_prizes: r.awarded_prizes,
+      notes: r.notes,
       school_year_label: schoolYear?.label ?? "—",
     };
   });

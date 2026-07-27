@@ -38,6 +38,30 @@
             "niveau_admission": { "francophone": "CPS", "anglophone": "CPS" },
             "intervalle_moyenne": null,
             "prix": "SPECIAL"
+          },
+          {
+            "niveau_depart": { "francophone": "PS", "anglophone": "PN" },
+            "niveau_admission": { "francophone": "MS", "anglophone": "N1" },
+            "intervalle_moyenne": null,
+            "prix": "SPECIAL"
+          },
+          {
+            "niveau_depart": { "francophone": "MS", "anglophone": "N1" },
+            "niveau_admission": { "francophone": "GS", "anglophone": "N2" },
+            "intervalle_moyenne": null,
+            "prix": "SPECIAL"
+          },
+          {
+            "niveau_depart": { "francophone": "GS", "anglophone": "N2" },
+            "niveau_admission": { "francophone": "SIL", "anglophone": "CLASS 1" },
+            "intervalle_moyenne": null,
+            "prix": "SPECIAL"
+          },
+          {
+            "niveau_depart": { "francophone": "GS", "anglophone": "N2" },
+            "niveau_admission": { "francophone": "CPS", "anglophone": "CPS" },
+            "intervalle_moyenne": null,
+            "prix": "SPECIAL"
           }
         ]
       },

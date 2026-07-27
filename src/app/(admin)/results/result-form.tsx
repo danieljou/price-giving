@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, TriangleAlert } from "lucide-react";
@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
@@ -86,6 +87,7 @@ export function ResultForm({
 
   const studentId = watch("student_id");
   const section = watch("section");
+  const niveauDepart = watch("niveau_depart");
 
   useEffect(() => {
     if (isEditing) return;
@@ -98,6 +100,30 @@ export function ResultForm({
   const niveauOptions = niveaux
     .filter((n) => n.section === section)
     .sort((a, b) => a.progression_order - b.progression_order);
+
+  // Admission only makes sense at the same tier or above the departure level
+  // (e.g. CM1 → CEP/CM2, 3e → BEPC/2nd) — narrows the dropdown instead of
+  // listing every niveau in the section regardless of where the student starts.
+  const departOrder = niveauOptions.find((n) => n.code === niveauDepart)
+    ?.progression_order;
+  const admissionOptions =
+    departOrder != null
+      ? niveauOptions.filter(
+          (n) => n.progression_order >= departOrder && n.code !== niveauDepart
+        )
+      : niveauOptions;
+
+  const isFirstNiveauDepartRender = useRef(true);
+  useEffect(() => {
+    if (isFirstNiveauDepartRender.current) {
+      isFirstNiveauDepartRender.current = false;
+      return;
+    }
+    setValue("niveau_admission", "");
+    // Reset admission whenever departure changes so a stale, now-invalid
+    // selection can't linger — but not on the initial mount (edit prefill).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [niveauDepart]);
 
   function onSubmit(values: ResultValues) {
     setServerError(null);
@@ -119,6 +145,9 @@ export function ResultForm({
     }
     if (values.rang) {
       formData.set("rang", values.rang);
+    }
+    if (values.notes) {
+      formData.set("notes", values.notes);
     }
 
     startTransition(async () => {
@@ -277,10 +306,16 @@ export function ResultForm({
                   onValueChange={(v) => field.onChange(v)}
                 >
                   <SelectTrigger id="niveau_admission" className="w-full">
-                    <SelectValue placeholder="Aucun (optionnel)" />
+                    <SelectValue
+                      placeholder={
+                        niveauDepart
+                          ? "Aucun (optionnel)"
+                          : "Choisir d'abord le niveau de départ"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    {niveauOptions.map((n) => (
+                    {admissionOptions.map((n) => (
                       <SelectItem key={n.code} value={n.code}>
                         {n.code}
                       </SelectItem>
@@ -356,6 +391,27 @@ export function ResultForm({
               <p className="text-sm text-destructive">{errors.rang.message}</p>
             )}
           </div>
+        </div>
+      </fieldset>
+
+      <fieldset className="flex flex-col gap-4">
+        <legend className="mb-3 text-sm font-semibold text-foreground">
+          Informations complémentaires
+        </legend>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="notes">Notes (optionnel)</Label>
+          <Textarea
+            id="notes"
+            placeholder="ex. précision sur une décision, contexte particulier..."
+            aria-invalid={!!errors.notes}
+            {...register("notes")}
+          />
+          <p className="text-xs text-muted-foreground">
+            Apparaît sur la fiche de l&apos;étudiant et sur le rapport imprimé.
+          </p>
+          {errors.notes && (
+            <p className="text-sm text-destructive">{errors.notes.message}</p>
+          )}
         </div>
       </fieldset>
 
