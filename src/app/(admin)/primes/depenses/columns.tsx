@@ -54,8 +54,7 @@ function DeleteDepenseButton({ depense }: Readonly<{ depense: DepenseRow }>) {
   );
 }
 
-export function buildDepenseColumns(sessionId: string): ColumnDef<DepenseRow>[] {
-  return [
+export const depenseColumns: ColumnDef<DepenseRow>[] = [
     {
       accessorKey: "libelle",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Libellé" />,
@@ -99,10 +98,9 @@ export function buildDepenseColumns(sessionId: string): ColumnDef<DepenseRow>[] 
       header: () => <span className="sr-only">Actions</span>,
       cell: ({ row }) => (
         <div className="flex items-center gap-1">
-          <DepenseFormDialog sessionId={sessionId} depense={row.original} />
+          <DepenseFormDialog depense={row.original} />
           <DeleteDepenseButton depense={row.original} />
         </div>
       ),
     },
   ];
-}

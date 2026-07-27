@@ -1,4 +1,7 @@
 "use client";
+// See data-table-pagination.tsx: React Compiler must not memoize this on the
+// `table` prop's stable identity, or filter/search state goes stale.
+"use no memo";
 
 import { type Table } from "@tanstack/react-table";
 import { Search, X } from "lucide-react";

@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/data-table";
 import { pickDefaultSchoolYear } from "@/lib/school-year";
 import { formatMontant } from "@/lib/primes/format";
-import { buildDepenseColumns, type DepenseRow } from "./columns";
+import { depenseColumns, type DepenseRow } from "./columns";
 import { DepenseFormDialog } from "./depense-form-dialog";
 
 interface PageProps {
@@ -89,7 +89,7 @@ export default async function DepensesPage({ searchParams }: Readonly<PageProps>
           </Card>
 
           <DataTable
-            columns={buildDepenseColumns(sessionId)}
+            columns={depenseColumns}
             data={rows}
             pageSize={15}
             filterFields={[

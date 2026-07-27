@@ -1,4 +1,7 @@
 "use client";
+// See data-table-pagination.tsx: React Compiler must not memoize this on the
+// `table` prop's stable identity, or column-visibility toggles go stale.
+"use no memo";
 
 import { type Table } from "@tanstack/react-table";
 import { Check, Columns3 } from "lucide-react";

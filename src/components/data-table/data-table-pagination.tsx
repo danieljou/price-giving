@@ -1,4 +1,7 @@
 "use client";
+// React Compiler would otherwise memoize this on the `table` prop's stable
+// object identity, so pageIndex/pageCount stop updating after navigation.
+"use no memo";
 
 import { type Table } from "@tanstack/react-table";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";

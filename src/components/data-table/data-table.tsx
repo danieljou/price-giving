@@ -206,7 +206,7 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
-      {pagination && !isLoading && table.getPageCount() > 1 && (
+      {pagination && !isLoading && data.length > 0 && (
         <DataTablePagination table={table} pageSizeOptions={pageSizeOptions} />
       )}
     </div>

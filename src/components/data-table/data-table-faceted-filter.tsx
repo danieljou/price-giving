@@ -1,4 +1,7 @@
 "use client";
+// See data-table-pagination.tsx: React Compiler must not memoize this on the
+// `column` prop's stable identity, or the selected-filter state goes stale.
+"use no memo";
 
 import { type Column } from "@tanstack/react-table";
 import { Check, PlusCircle } from "lucide-react";

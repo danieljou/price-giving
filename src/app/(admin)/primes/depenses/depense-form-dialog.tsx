@@ -34,7 +34,7 @@ const CATEGORY_SUGGESTIONS = [
 export function DepenseFormDialog({
   sessionId,
   depense,
-}: Readonly<{ sessionId: string; depense?: DepenseRow }>) {
+}: Readonly<{ sessionId?: string; depense?: DepenseRow }>) {
   const isEdit = !!depense;
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -46,6 +46,8 @@ export function DepenseFormDialog({
   const [observation, setObservation] = useState(depense?.observation ?? "");
 
   function submit() {
+    if (!isEdit && !sessionId) return;
+
     const formData = new FormData();
     formData.set("libelle", libelle);
     formData.set("categorie", categorie);
@@ -56,7 +58,7 @@ export function DepenseFormDialog({
     startTransition(async () => {
       const result = isEdit
         ? await updateDepense(depense.id, formData)
-        : await createDepense(sessionId, formData);
+        : await createDepense(sessionId!, formData);
 
       if (result.error) {
         toast.error(result.error);
