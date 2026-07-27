@@ -8,6 +8,7 @@ import {
   UserPlus,
   SlidersHorizontal,
   ListChecks,
+  Wallet,
 } from "lucide-react";
 
 export interface NavItem {
@@ -25,6 +26,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/school-years", label: "Années scolaires", icon: CalendarRange },
   { href: "/criteria", label: "Critères", icon: SlidersHorizontal },
   { href: "/review", label: "Vérification manuelle", icon: ListChecks },
+  { href: "/primes/configuration", label: "Primes", icon: Wallet },
 ];
 
 /** Mobile bottom tab bar — capped at 4 so the total stays at or below 5 with the FAB. */
@@ -41,4 +43,5 @@ export const FAB_NAV_ITEMS: NavItem[] = [
   { href: "/students/new", label: "Nouvel étudiant", icon: UserPlus },
   { href: "/criteria", label: "Critères", icon: SlidersHorizontal },
   { href: "/review", label: "Vérification manuelle", icon: ListChecks },
+  { href: "/primes/configuration", label: "Primes", icon: Wallet },
 ];

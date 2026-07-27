@@ -2,6 +2,11 @@ export type Section = "francophone" | "anglophone";
 
 export type PrizeCode = "SPECIAL" | "EXC" | "ENC" | "EXC_PLUS";
 
+/** Financial "type de prime" codes — seeded 1:1 with PrizeCode so beneficiary
+ *  counts can be derived automatically from results.awarded_prizes, but the
+ *  table itself stays editable (libellé/description) and open to new codes. */
+export type TypePrimeCode = string;
+
 export interface Database {
   public: {
     Tables: {
@@ -136,6 +141,176 @@ export interface Database {
           {
             foreignKeyName: "results_school_year_id_fkey";
             columns: ["school_year_id"];
+            isOneToOne: false;
+            referencedRelation: "school_years";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      articles: {
+        Row: {
+          id: string;
+          code: string;
+          libelle: string;
+          categorie: string;
+          description: string | null;
+          unite: string;
+          prix_reference: number;
+          actif: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          libelle: string;
+          categorie: string;
+          description?: string | null;
+          unite?: string;
+          prix_reference?: number;
+          actif?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["articles"]["Insert"]>;
+        Relationships: [];
+      };
+      types_primes: {
+        Row: {
+          id: string;
+          code: string;
+          libelle: string;
+          description: string | null;
+          actif: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          libelle: string;
+          description?: string | null;
+          actif?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["types_primes"]["Insert"]>;
+        Relationships: [];
+      };
+      configurations_primes: {
+        Row: {
+          id: string;
+          session_id: string;
+          niveau_id: string;
+          type_prime_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          niveau_id: string;
+          type_prime_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["configurations_primes"]["Insert"]
+        >;
+        Relationships: [
+          {
+            foreignKeyName: "configurations_primes_session_id_fkey";
+            columns: ["session_id"];
+            isOneToOne: false;
+            referencedRelation: "school_years";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "configurations_primes_niveau_id_fkey";
+            columns: ["niveau_id"];
+            isOneToOne: false;
+            referencedRelation: "niveaux";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "configurations_primes_type_prime_id_fkey";
+            columns: ["type_prime_id"];
+            isOneToOne: false;
+            referencedRelation: "types_primes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      configuration_prime_articles: {
+        Row: {
+          id: string;
+          configuration_prime_id: string;
+          article_id: string;
+          quantite: number;
+          prix_session: number;
+          montant: number;
+          observation: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          configuration_prime_id: string;
+          article_id: string;
+          quantite?: number;
+          prix_session?: number;
+          observation?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["configuration_prime_articles"]["Insert"]
+        >;
+        Relationships: [
+          {
+            foreignKeyName: "configuration_prime_articles_configuration_prime_id_fkey";
+            columns: ["configuration_prime_id"];
+            isOneToOne: false;
+            referencedRelation: "configurations_primes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "configuration_prime_articles_article_id_fkey";
+            columns: ["article_id"];
+            isOneToOne: false;
+            referencedRelation: "articles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      depenses_complementaires: {
+        Row: {
+          id: string;
+          session_id: string;
+          libelle: string;
+          categorie: string;
+          description: string | null;
+          montant: number;
+          observation: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          libelle: string;
+          categorie: string;
+          description?: string | null;
+          montant?: number;
+          observation?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["depenses_complementaires"]["Insert"]
+        >;
+        Relationships: [
+          {
+            foreignKeyName: "depenses_complementaires_session_id_fkey";
+            columns: ["session_id"];
             isOneToOne: false;
             referencedRelation: "school_years";
             referencedColumns: ["id"];
