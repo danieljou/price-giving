@@ -82,7 +82,7 @@ export function BudgetByNiveauChart({ data }: Readonly<{ data: AmountByLabel[] }
                 position="right"
                 className="fill-foreground"
                 fontSize={11}
-                formatter={(v: number) => formatMontant(v)}
+                formatter={(v) => formatMontant(Number(v ?? 0))}
               />
             </Bar>
           </BarChart>
@@ -168,7 +168,7 @@ export function BudgetByCategorieChart({ data }: Readonly<{ data: AmountByLabel[
                 position="right"
                 className="fill-foreground"
                 fontSize={11}
-                formatter={(v: number) => formatMontant(v)}
+                formatter={(v) => formatMontant(Number(v ?? 0))}
               />
             </Bar>
           </BarChart>

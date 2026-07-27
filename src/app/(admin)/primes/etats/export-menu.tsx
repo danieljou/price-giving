@@ -180,7 +180,7 @@ export function ExportMenu({
 
   async function printPdf() {
     const doc = await buildPdfDoc();
-    window.open(doc.output("bloburl") as string, "_blank");
+    window.open(String(doc.output("bloburl")), "_blank");
   }
 
   async function exportExcel() {
