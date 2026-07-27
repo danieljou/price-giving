@@ -105,7 +105,7 @@ export default async function ConfigurationEditorPage({
 
   const cost = configCost(lines.map((l) => ({ quantite: l.quantite, prix_session: l.prix_session })));
   const beneficiaries = (results ?? []).filter((r) =>
-    r.awarded_prizes.includes(typePrime.code)
+    (r.awarded_prizes as readonly string[]).includes(typePrime.code)
   ).length;
   const estimatedBudget = cost * beneficiaries;
 
