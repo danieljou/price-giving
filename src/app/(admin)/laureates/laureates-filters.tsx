@@ -54,7 +54,10 @@ export function LaureatesFilters({
       : [];
 
   return (
-    <form method="GET" className="flex flex-wrap items-end gap-3">
+    <form
+      method="GET"
+      className="flex flex-wrap items-end gap-3 bg-white rounded-md p-8 my-5"
+    >
       <Select name="year" defaultValue={effectiveYear ?? "all"}>
         <SelectTrigger className="w-40">
           <SelectValue placeholder="Année" />

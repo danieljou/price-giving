@@ -86,7 +86,7 @@ export default async function LaureatesPage({
   let query = supabase
     .from("results")
     .select(
-      "id, niveau_depart, niveau_admission, classe_texte, moyenne, rang, awarded_prizes, manual_review_notes, manual_review_resolved, notes, section, students(first_name, last_name), school_years!inner(label, start_year)"
+      "id, niveau_depart, niveau_admission, classe_texte, moyenne, rang, awarded_prizes, manual_review_notes, manual_review_resolved, notes, section, students(first_name, last_name), school_years!inner(label, start_year)",
     );
 
   if (effectiveYear) query = query.eq("school_year_id", effectiveYear);
@@ -130,7 +130,7 @@ export default async function LaureatesPage({
           : "—",
         school_year_label: schoolYear?.label ?? "—",
       };
-    }
+    },
   );
 
   const yearToRecompute = effectiveYear;

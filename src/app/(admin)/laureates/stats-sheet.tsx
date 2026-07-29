@@ -44,7 +44,7 @@ export function StatsSheet({ rows, scopeLabel }: Readonly<StatsSheetProps>) {
   const prizeCounts: PrizeCount[] = [
     ...countBy(
       laureates.flatMap((r) => r.awarded_prizes),
-      (code) => code
+      (code) => code,
     ).entries(),
   ].map(([prize, count]) => ({ prize, count }));
 
@@ -52,7 +52,7 @@ export function StatsSheet({ rows, scopeLabel }: Readonly<StatsSheetProps>) {
     (section) => ({
       section,
       count: laureates.filter((r) => r.section === section).length,
-    })
+    }),
   );
 
   const niveauCounts: NiveauCount[] = [
@@ -69,12 +69,13 @@ export function StatsSheet({ rows, scopeLabel }: Readonly<StatsSheetProps>) {
       </SheetTrigger>
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
         <SheetHeader>
-          <SheetTitle className="flex items-center gap-1.5">
+          <SheetTitle className="flex items-center gap-1.5 text-black">
             <ChartColumn className="size-4" aria-hidden="true" />
             Statistiques
           </SheetTitle>
           <SheetDescription>
-            {laureates.length} lauréat{laureates.length > 1 ? "s" : ""} — {scopeLabel}
+            {laureates.length} lauréat{laureates.length > 1 ? "s" : ""} —{" "}
+            {scopeLabel}
           </SheetDescription>
         </SheetHeader>
         <div className="flex flex-col gap-4 px-4 pb-4">

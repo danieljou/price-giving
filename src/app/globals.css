@@ -85,6 +85,9 @@
   --sidebar-accent-foreground: #1e40af;
   --sidebar-border: #e2e8f0;
   --sidebar-ring: #1e40af;
+  /* Hero header gradient — always derived from --primary, never a new hue */
+  --hero-gradient-from: var(--primary);
+  --hero-gradient-to: color-mix(in oklch, var(--primary) 100%, black 25%);
 }
 
 .dark {
@@ -120,6 +123,8 @@
   --sidebar-accent-foreground: #f8fafc;
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: #3b82f6;
+  --hero-gradient-from: var(--primary);
+  --hero-gradient-to: color-mix(in oklch, var(--primary) 100%, black 35%);
 }
 
 @layer base {

@@ -34,7 +34,7 @@ export function FabMenu({ onLogout }: Readonly<FabMenuProps>) {
         <SheetHeader>
           <SheetTitle>Plus d&apos;options</SheetTitle>
         </SheetHeader>
-        <div className="grid grid-cols-3 gap-1 px-4 pb-6">
+        <div className="grid grid-cols-2 gap-1 px-4 pb-6">
           {FAB_NAV_ITEMS.map((item) => (
             <SheetClose key={item.href} asChild>
               <Link

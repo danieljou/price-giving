@@ -28,7 +28,9 @@ interface PageProps {
   searchParams: Promise<{ session?: string }>;
 }
 
-export default async function ConfigurationPage({ searchParams }: Readonly<PageProps>) {
+export default async function ConfigurationPage({
+  searchParams,
+}: Readonly<PageProps>) {
   const filters = await searchParams;
   const supabase = await createClient();
 
@@ -70,10 +72,13 @@ export default async function ConfigurationPage({ searchParams }: Readonly<PageP
         .select("configuration_prime_id, quantite, prix_session")
         .in(
           "configuration_prime_id",
-          configRows.map((c) => c.id)
+          configRows.map((c) => c.id),
         );
 
-      const linesByConfig = new Map<string, { quantite: number; prix_session: number }[]>();
+      const linesByConfig = new Map<
+        string,
+        { quantite: number; prix_session: number }[]
+      >();
       for (const line of lines ?? []) {
         const list = linesByConfig.get(line.configuration_prime_id) ?? [];
         list.push({ quantite: line.quantite, prix_session: line.prix_session });
@@ -153,8 +158,13 @@ export default async function ConfigurationPage({ searchParams }: Readonly<PageP
                   <TableCell className="font-medium text-foreground">
                     <div className="flex items-center gap-2">
                       {niveau.code}
-                      <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground">
-                        {niveau.section === "francophone" ? "Franco." : "Anglo."}
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] font-normal text-muted-foreground"
+                      >
+                        {niveau.section === "francophone"
+                          ? "Franco."
+                          : "Anglo."}
                       </Badge>
                     </div>
                   </TableCell>

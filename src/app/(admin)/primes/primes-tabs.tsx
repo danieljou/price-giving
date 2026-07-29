@@ -17,9 +17,13 @@ export function PrimesTabs() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-wrap gap-1 border-b border-border pb-px" aria-label="Sous-navigation Primes">
+    <nav
+      className="flex flex-wrap gap-1 border-b border-border  bg-white p-4 rounded-xl"
+      aria-label="Sous-navigation Primes"
+    >
       {TABS.map((tab) => {
-        const active = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+        const active =
+          pathname === tab.href || pathname.startsWith(`${tab.href}/`);
         return (
           <Link
             key={tab.href}
@@ -28,7 +32,7 @@ export function PrimesTabs() {
               "rounded-t-sm border-b-2 px-3 py-2 text-sm font-medium transition-colors",
               active
                 ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
             {tab.label}

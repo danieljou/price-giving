@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import {
   Command,
   CommandDialog,
@@ -12,6 +12,8 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { searchStudents, type StudentSearchResult } from "@/app/(admin)/search-actions";
 import { ALL_NAV_ITEMS } from "./nav-items";
 
@@ -19,6 +21,28 @@ import { ALL_NAV_ITEMS } from "./nav-items";
  *  used by the visible "Rechercher" button since it lives outside this
  *  component's own state. */
 export const OPEN_COMMAND_MENU_EVENT = "price-giving:open-command-menu";
+
+/** Compact icon button for the hero header — dispatches the same open event
+ *  as the sidebar's "Rechercher" row. */
+export function HeaderSearchButton({
+  className,
+}: Readonly<{ className?: string }>) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-label="Rechercher (Ctrl+K)"
+      onClick={() => window.dispatchEvent(new Event(OPEN_COMMAND_MENU_EVENT))}
+      className={cn(
+        "text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground",
+        className
+      )}
+    >
+      <Search aria-hidden="true" />
+    </Button>
+  );
+}
 
 export function CommandMenu() {
   const router = useRouter();

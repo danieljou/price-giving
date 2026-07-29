@@ -31,9 +31,9 @@ export function AppSidebar({ userEmail, onLogout }: Readonly<AppSidebarProps>) {
   const initials = userEmail ? userEmail.slice(0, 2).toUpperCase() : "JV";
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" variant="floating">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-1.5">
+        <div className="flex items-center gap-2.5 px-2 py-2">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <GraduationCap className="size-4" aria-hidden="true" />
           </div>
@@ -52,6 +52,7 @@ export function AppSidebar({ userEmail, onLogout }: Readonly<AppSidebarProps>) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
+                  size="lg"
                   tooltip="Rechercher (Ctrl+K)"
                   onClick={() =>
                     window.dispatchEvent(new Event(OPEN_COMMAND_MENU_EVENT))
@@ -66,7 +67,7 @@ export function AppSidebar({ userEmail, onLogout }: Readonly<AppSidebarProps>) {
               </SidebarMenuItem>
             </SidebarMenu>
             <SidebarSeparator className="my-2" />
-            <SidebarMenu>
+            <SidebarMenu className="gap-1">
               {ALL_NAV_ITEMS.map((item) => {
                 const isActive =
                   pathname === item.href ||
@@ -76,6 +77,7 @@ export function AppSidebar({ userEmail, onLogout }: Readonly<AppSidebarProps>) {
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       asChild
+                      size="lg"
                       isActive={isActive}
                       tooltip={item.label}
                     >

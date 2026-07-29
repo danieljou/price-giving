@@ -43,7 +43,10 @@ const PRIZE_LABELS: Record<string, string> = {
 const PRIZE_ORDER = ["SPECIAL", "EXC", "ENC", "EXC_PLUS"];
 
 /** One accent color per prize, shared by the PDF/Word section headers. */
-const PRIZE_COLORS: Record<string, { rgb: [number, number, number]; hex: string }> = {
+const PRIZE_COLORS: Record<
+  string,
+  { rgb: [number, number, number]; hex: string }
+> = {
   SPECIAL: { rgb: [124, 58, 237], hex: "7C3AED" },
   EXC: { rgb: [217, 119, 6], hex: "D97706" },
   ENC: { rgb: [13, 148, 136], hex: "0D9488" },
@@ -168,7 +171,8 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
   }
 
   async function exportCsv() {
-    const escape = (v: string | number) => `"${String(v).replaceAll('"', '""')}"`;
+    const escape = (v: string | number) =>
+      `"${String(v).replaceAll('"', '""')}"`;
     const sorted = [...rows].sort(ceremonySort);
     const lines = [
       [...HEADERS, "Prix"].map(escape).join(";"),
@@ -178,7 +182,7 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
           r.awarded_prizes.map((c) => PRIZE_LABELS[c] ?? c).join(", "),
         ]
           .map(escape)
-          .join(";")
+          .join(";"),
       ),
     ];
     // BOM so Excel opens the accented names correctly
@@ -208,7 +212,7 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
       XLSX.utils.book_append_sheet(
         workbook,
         sheet,
-        (PRIZE_LABELS[code] ?? code).slice(0, 31)
+        (PRIZE_LABELS[code] ?? code).slice(0, 31),
       );
     }
     XLSX.writeFile(workbook, `${baseFilename(scopeLabel)}.xlsx`);
@@ -250,7 +254,7 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
                 styles: { fillColor: SEPARATOR_GRAY_RGB, minCellHeight: 2 },
               },
             ]
-          : rowCells(item.row, item.index).map((c) => pdfSafe(String(c)))
+          : rowCells(item.row, item.index).map((c) => pdfSafe(String(c))),
       );
 
       autoTable(doc, {
@@ -360,7 +364,7 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
       (pageHeight - margin * 2 - gap * (linesPerPage - 1)) / linesPerPage;
 
     const items = groupByPrize(rows).flatMap(([code, group]) =>
-      group.map((row, index) => ({ code, row, number: index + 1 }))
+      group.map((row, index) => ({ code, row, number: index + 1 })),
     );
 
     let col = 0;
@@ -393,7 +397,7 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
       doc.setFontSize(10);
       const nameLines = doc.splitTextToSize(
         item.row.student_name,
-        cellW - 8
+        cellW - 8,
       ) as string[];
       nameLines.slice(0, 2).forEach((nameLine, li) => {
         doc.text(nameLine, x + cellW / 2, y + cellH * 0.58 + li * 4.2, {
@@ -408,7 +412,7 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
         PRIZE_LABELS[item.code] ?? item.code,
         x + cellW / 2,
         y + cellH * 0.88,
-        { align: "center" }
+        { align: "center" },
       );
 
       col++;
@@ -486,9 +490,9 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
                     (cell) =>
                       new TableCell({
                         children: [new Paragraph(String(cell))],
-                      })
+                      }),
                   ),
-                })
+                }),
           ),
         ],
       });
@@ -514,7 +518,7 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
         new TableRow({
           tableHeader: true,
           children: ["", ...summary.cycles, "TOTAL"].map((h) =>
-            headerCell(h, "1E40AF")
+            headerCell(h, "1E40AF"),
           ),
         }),
         ...summary.rows.map(
@@ -523,11 +527,11 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
               children: [
                 summaryCell(r.label, !!r.emphasis),
                 ...r.values.map((v) =>
-                  summaryCell(formatSummaryCell(v), !!r.emphasis, true)
+                  summaryCell(formatSummaryCell(v), !!r.emphasis, true),
                 ),
                 summaryCell(String(r.total), true, true),
               ],
-            })
+            }),
         ),
         new TableRow({
           children: [
@@ -567,7 +571,10 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
       ],
     });
 
-    const children: (InstanceType<typeof Paragraph> | InstanceType<typeof Table>)[] = [
+    const children: (
+      | InstanceType<typeof Paragraph>
+      | InstanceType<typeof Table>
+    )[] = [
       new Paragraph({
         heading: HeadingLevel.TITLE,
         alignment: AlignmentType.CENTER,
@@ -575,9 +582,7 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
       }),
       new Paragraph({
         alignment: AlignmentType.CENTER,
-        children: [
-          new TextRun({ text: `Liste des lauréats — ${scopeLabel}` }),
-        ],
+        children: [new TextRun({ text: `Liste des lauréats — ${scopeLabel}` })],
       }),
       new Paragraph(""),
     ];
@@ -594,7 +599,7 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
           ],
         }),
         makeTable(code, group),
-        new Paragraph("")
+        new Paragraph(""),
       );
     }
 
@@ -603,7 +608,7 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
         heading: HeadingLevel.HEADING_1,
         children: [new TextRun({ text: "Synthèse", bold: true })],
       }),
-      summaryTable
+      summaryTable,
     );
 
     const doc = new Document({ sections: [{ children }] });
@@ -614,7 +619,11 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" disabled={busy || rows.length === 0}>
+        <Button
+          variant="outline"
+          disabled={busy || rows.length === 0}
+          className="text-black"
+        >
           {busy ? (
             <Loader2 className="animate-spin" aria-hidden="true" />
           ) : (
@@ -653,9 +662,7 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
           CSV (.csv)
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => void run("Étiquettes", exportLabels)}
-        >
+        <DropdownMenuItem onClick={() => void run("Étiquettes", exportLabels)}>
           <Tags aria-hidden="true" />
           Étiquettes (.pdf)
         </DropdownMenuItem>
@@ -663,4 +670,3 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
     </DropdownMenu>
   );
 }
-

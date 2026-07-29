@@ -76,8 +76,11 @@ export function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   const { t } = useTranslation();
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
 
   // DataTableFacetedFilter always stores its selection as a string[], which
   // needs an "is the row's value one of the selected options" filter rather
@@ -87,12 +90,13 @@ export function DataTable<TData, TValue>({
   // for free (mirrors the manual filterFn already used in criteria/columns.tsx).
   const facetedColumnIds = React.useMemo(
     () => new Set(filterFields.map((f) => f.columnId)),
-    [filterFields]
+    [filterFields],
   );
   const resolvedColumns = React.useMemo(() => {
     if (facetedColumnIds.size === 0) return columns;
     return columns.map((col) => {
-      const id = col.id ?? ("accessorKey" in col ? String(col.accessorKey) : undefined);
+      const id =
+        col.id ?? ("accessorKey" in col ? String(col.accessorKey) : undefined);
       if (id && facetedColumnIds.has(id) && !col.filterFn) {
         return {
           ...col,
@@ -124,7 +128,12 @@ export function DataTable<TData, TValue>({
   const colCount = table.getAllColumns().length;
 
   return (
-    <div className={cn("bg-card ring-1 ring-foreground/10 rounded-sm overflow-hidden", className)}>
+    <div
+      className={cn(
+        "bg-card ring-1 ring-foreground/10 rounded-sm overflow-hidden",
+        className,
+      )}
+    >
       {hasToolbar && (
         <DataTableToolbar
           table={table}
@@ -139,7 +148,10 @@ export function DataTable<TData, TValue>({
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id} className="bg-muted/40 hover:bg-muted/40 border-b border-border">
+              <TableRow
+                key={hg.id}
+                className="bg-muted/40 hover:bg-muted/40 border-b border-border"
+              >
                 {hg.headers.map((header) => {
                   const sorted = header.column.getIsSorted();
                   return (
@@ -154,12 +166,20 @@ export function DataTable<TData, TValue>({
                               ? "none"
                               : undefined
                       }
-                      style={{ width: header.getSize() !== 150 ? header.getSize() : undefined }}
+                      style={{
+                        width:
+                          header.getSize() !== 150
+                            ? header.getSize()
+                            : undefined,
+                      }}
                       className="h-9 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap"
                     >
                       {header.isPlaceholder
                         ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </TableHead>
                   );
                 })}
@@ -186,7 +206,10 @@ export function DataTable<TData, TValue>({
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="px-3 py-2.5 text-xs">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>

@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const OPTIONS = [
   { value: "light", label: "Clair", icon: Sun },
@@ -81,6 +83,35 @@ export function ThemeToggle() {
         </SidebarMenuButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="top">
+        <ThemeOptionsList mounted={mounted} theme={theme} setTheme={setTheme} />
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/** Compact icon button for the hero header, on the gradient banner. */
+export function ThemeToggleHeaderButton({
+  className,
+}: Readonly<{ className?: string }>) {
+  const { theme, setTheme, mounted, Icon } = useThemeToggleState();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Changer de thème"
+          className={cn(
+            "text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground",
+            className
+          )}
+        >
+          <Icon aria-hidden="true" className={mounted ? undefined : "opacity-0"} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" side="bottom">
         <ThemeOptionsList mounted={mounted} theme={theme} setTheme={setTheme} />
       </DropdownMenuContent>
     </DropdownMenu>

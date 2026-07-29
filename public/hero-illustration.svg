@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="blobA" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.38"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="blobB" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="waveFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.04"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="980" cy="90" r="260" fill="url(#blobA)"/>
+  <circle cx="160" cy="330" r="220" fill="url(#blobB)"/>
+  <circle cx="620" cy="60" r="140" fill="url(#blobB)"/>
+
+  <path
+    d="M0,300 C160,250 280,340 460,310 C640,280 720,200 900,230 C1020,250 1100,300 1200,280 L1200,420 L0,420 Z"
+    fill="url(#waveFill)"
+  />
+  <path
+    d="M0,360 C180,320 320,390 520,360 C700,335 780,280 960,300 C1060,312 1140,350 1200,340 L1200,420 L0,420 Z"
+    fill="#ffffff"
+    fill-opacity="0.10"
+  />
+
+  <g fill="#ffffff" fill-opacity="0.5">
+    <circle cx="120" cy="70" r="3"/>
+    <circle cx="220" cy="40" r="2"/>
+    <circle cx="760" cy="150" r="2.5"/>
+    <circle cx="1080" cy="200" r="3"/>
+    <circle cx="1140" cy="120" r="2"/>
+    <circle cx="420" cy="120" r="2"/>
+  </g>
+</svg>

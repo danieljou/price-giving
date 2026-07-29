@@ -20,7 +20,7 @@ export default async function StudentsPage() {
         description={`${students?.length ?? 0} étudiant${(students?.length ?? 0) > 1 ? "s" : ""} enregistré${(students?.length ?? 0) > 1 ? "s" : ""}`}
       >
         <Button variant="outline" asChild>
-          <Link href="/students/import">
+          <Link href="/students/import" className="text-black">
             <Upload />
             Importer
           </Link>
