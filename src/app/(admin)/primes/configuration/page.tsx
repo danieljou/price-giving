@@ -171,10 +171,10 @@ export default async function ConfigurationPage({
                   {types.map((type) => {
                     const cell = cellByKey.get(`${niveau.id}:${type.id}`);
                     return (
-                      <TableCell key={type.id}>
+                      <TableCell key={type.id} className="align-top">
                         <Link
                           href={`/primes/configuration/${niveau.id}?session=${sessionId}&type=${type.id}`}
-                          className="block rounded-sm px-2 py-1.5 text-xs hover:bg-muted"
+                          className="block min-w-28 rounded-sm px-2 py-1.5 text-xs whitespace-normal break-words hover:bg-muted"
                         >
                           {cell ? (
                             <span className="font-medium text-foreground">

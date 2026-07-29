@@ -16,6 +16,7 @@ export interface TabData {
   lines: CompositionLine[];
   cost: number;
   beneficiaries: number;
+  history?: React.ReactNode;
 }
 
 export function NiveauEditorTabs({
@@ -103,15 +104,32 @@ export function NiveauEditorTabs({
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3">
-          <CardTitle>Composition — {active.libelle}</CardTitle>
-          <ArticlePicker
-            configId={active.configId}
-            articles={articles}
-            existingArticleIds={active.lines.map((l) => l.article_id)}
-          />
+          <CardTitle className="min-w-0 truncate">
+            Composition — {active.libelle}
+          </CardTitle>
+          <div className="shrink-0">
+            <ArticlePicker
+              configId={active.configId}
+              articles={articles}
+              existingArticleIds={active.lines.map((l) => l.article_id)}
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <LinesTable lines={active.lines} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Historique</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {active.history ?? (
+            <p className="text-sm text-muted-foreground">
+              Aucun historique pour l&apos;instant.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

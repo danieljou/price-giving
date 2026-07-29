@@ -58,21 +58,25 @@ export async function createResult(
   const { awarded_prizes, criteria_computed_at, manualReviewNotes } =
     await computeAwardedPrizes(supabase, parsed);
 
-  const { error } = await supabase.from("results").insert({
-    student_id: parsed.studentId,
-    school_year_id: parsed.schoolYearId,
-    section: parsed.section,
-    niveau_depart: parsed.niveauDepart,
-    niveau_admission: parsed.niveauAdmission,
-    classe_texte: parsed.classeTexte,
-    moyenne: parsed.moyenne,
-    rang: parsed.rang,
-    notes: parsed.notes,
-    awarded_prizes,
-    manual_review_notes: manualReviewNotes,
-    manual_review_resolved: false,
-    criteria_computed_at,
-  });
+  const { data: created, error } = await supabase
+    .from("results")
+    .insert({
+      student_id: parsed.studentId,
+      school_year_id: parsed.schoolYearId,
+      section: parsed.section,
+      niveau_depart: parsed.niveauDepart,
+      niveau_admission: parsed.niveauAdmission,
+      classe_texte: parsed.classeTexte,
+      moyenne: parsed.moyenne,
+      rang: parsed.rang,
+      notes: parsed.notes,
+      awarded_prizes,
+      manual_review_notes: manualReviewNotes,
+      manual_review_resolved: false,
+      criteria_computed_at,
+    })
+    .select()
+    .single();
 
   if (error) {
     return {
@@ -82,6 +86,14 @@ export async function createResult(
           : "Erreur lors de l'enregistrement.",
     };
   }
+
+  await supabase.rpc("log_audit", {
+    p_entity_type: "result",
+    p_entity_id: created.id,
+    p_action: "create",
+    p_before: null,
+    p_after: created,
+  });
 
   revalidatePath(`/students/${parsed.studentId}`);
   revalidatePath("/laureates");
@@ -107,7 +119,7 @@ export async function updateResult(
 
   const { data: existing } = await supabase
     .from("results")
-    .select("manual_review_resolved")
+    .select("*")
     .eq("id", resultId)
     .single();
 
@@ -133,7 +145,7 @@ export async function updateResult(
     };
   }
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("results")
     .update({
       section: parsed.section,
@@ -145,11 +157,21 @@ export async function updateResult(
       notes: parsed.notes,
       ...prizeUpdate,
     })
-    .eq("id", resultId);
+    .eq("id", resultId)
+    .select()
+    .single();
 
   if (error) {
     return { error: "Erreur lors de la mise à jour." };
   }
+
+  await supabase.rpc("log_audit", {
+    p_entity_type: "result",
+    p_entity_id: resultId,
+    p_action: "update",
+    p_before: existing ?? null,
+    p_after: updated,
+  });
 
   revalidatePath(`/students/${parsed.studentId}`);
   revalidatePath("/laureates");
@@ -205,34 +227,56 @@ export async function recomputeYear(schoolYearId: string) {
 
 /** Marks a result as decided ("délibéré"): assigns the chosen prize (or none)
  *  and removes it from the manual-review queue. Frozen against recomputation
- *  until reopened — see updateResult/recomputeYear. */
+ *  until reopened — see updateResult/recomputeYear.
+ *
+ *  Goes through the resolve_manual_review RPC (not a direct .update()) so
+ *  the admin-only check lives in the database, not just in this action —
+ *  see supabase/migrations/20260729020000_manual_review_rpc.sql. */
 export async function resolveManualReview(
   resultId: string,
   prizeCode: PrizeCode | null
-) {
+): Promise<{ error?: string }> {
   const supabase = await createClient();
-  await supabase
-    .from("results")
-    .update({
-      awarded_prizes: prizeCode ? [prizeCode] : [],
-      manual_review_resolved: true,
-    })
-    .eq("id", resultId);
+  const { error } = await supabase.rpc("resolve_manual_review", {
+    p_result_id: resultId,
+    p_prize_code: prizeCode,
+  });
+
+  if (error) {
+    return {
+      error:
+        error.code === "42501"
+          ? "Seul un compte admin peut valider une vérification manuelle."
+          : "Erreur lors de la validation.",
+    };
+  }
 
   revalidatePath("/review");
   revalidatePath("/laureates");
+  return {};
 }
 
 /** Undoes resolveManualReview — clears the manually-assigned prize and puts
  *  the result back into the manual-review queue so admins can go back and
- *  forth on a decision. */
-export async function reopenManualReview(resultId: string) {
+ *  forth on a decision. Same admin-only RPC gate as resolveManualReview. */
+export async function reopenManualReview(
+  resultId: string
+): Promise<{ error?: string }> {
   const supabase = await createClient();
-  await supabase
-    .from("results")
-    .update({ awarded_prizes: [], manual_review_resolved: false })
-    .eq("id", resultId);
+  const { error } = await supabase.rpc("reopen_manual_review", {
+    p_result_id: resultId,
+  });
+
+  if (error) {
+    return {
+      error:
+        error.code === "42501"
+          ? "Seul un compte admin peut rouvrir une vérification manuelle."
+          : "Erreur lors de la réouverture.",
+    };
+  }
 
   revalidatePath("/review");
   revalidatePath("/laureates");
+  return {};
 }

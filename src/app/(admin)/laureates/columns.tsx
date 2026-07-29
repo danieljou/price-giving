@@ -1,7 +1,9 @@
 "use client";
 
+import { useTransition } from "react";
 import Link from "next/link";
 import { Gavel, Pencil, RotateCcw, StickyNote } from "lucide-react";
+import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +23,8 @@ import {
 } from "@/components/ui/tooltip";
 import { reopenManualReview, resolveManualReview } from "../results/actions";
 import type { PrizeCode } from "@/lib/supabase/types";
+import { typePrimeBadgeClass } from "@/lib/primes/prize-visuals";
+import { statusToneClass } from "@/lib/status-tones";
 
 const PRIZE_LABELS: Record<string, string> = {
   SPECIAL: "Prix Spécial",
@@ -63,7 +67,77 @@ export function classeDisplay(row: LaureateRow): string {
   );
 }
 
-export const laureateColumns: ColumnDef<LaureateRow>[] = [
+function ResolveManualReviewMenu({
+  resultId,
+}: Readonly<{ resultId: string }>) {
+  const [isPending, startTransition] = useTransition();
+
+  function resolve(code: PrizeCode | null) {
+    startTransition(async () => {
+      const result = await resolveManualReview(resultId, code);
+      if (result.error) toast.error(result.error);
+    });
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Délibérer"
+          disabled={isPending}
+        >
+          <Gavel aria-hidden="true" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Attribuer</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {DELIBERATION_PRIZE_OPTIONS.map((code) => (
+          <DropdownMenuItem key={code} onClick={() => resolve(code)}>
+            {PRIZE_LABELS[code]}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => resolve(null)}>
+          Aucun prix
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function ReopenManualReviewButton({
+  resultId,
+}: Readonly<{ resultId: string }>) {
+  const [isPending, startTransition] = useTransition();
+
+  function reopen() {
+    startTransition(async () => {
+      const result = await reopenManualReview(resultId);
+      if (result.error) toast.error(result.error);
+    });
+  }
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      aria-label="Revenir à non délibéré"
+      disabled={isPending}
+      onClick={reopen}
+    >
+      <RotateCcw aria-hidden="true" />
+    </Button>
+  );
+}
+
+export function getLaureateColumns(
+  isAdmin: boolean
+): ColumnDef<LaureateRow>[] {
+  return [
   {
     id: "index",
     header: "N°",
@@ -129,7 +203,11 @@ export const laureateColumns: ColumnDef<LaureateRow>[] = [
       const prizeBadges = row.original.awarded_prizes.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {row.original.awarded_prizes.map((code) => (
-            <Badge key={code} variant="secondary">
+            <Badge
+              key={code}
+              variant="secondary"
+              className={typePrimeBadgeClass(code)}
+            >
               {PRIZE_LABELS[code] ?? code}
             </Badge>
           ))}
@@ -140,43 +218,10 @@ export const laureateColumns: ColumnDef<LaureateRow>[] = [
         return (
           <div className="flex items-center gap-1.5">
             {prizeBadges}
-            <Badge
-              variant="outline"
-              className="border-amber-500 text-amber-600 dark:text-amber-400"
-            >
+            <Badge variant="outline" className={statusToneClass("pending")}>
               Décision à prendre
             </Badge>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Délibérer"
-                >
-                  <Gavel aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Attribuer</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {DELIBERATION_PRIZE_OPTIONS.map((code) => (
-                  <DropdownMenuItem
-                    key={code}
-                    onClick={() =>
-                      void resolveManualReview(row.original.id, code)
-                    }
-                  >
-                    {PRIZE_LABELS[code]}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => void resolveManualReview(row.original.id, null)}
-                >
-                  Aucun prix
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {isAdmin && <ResolveManualReviewMenu resultId={row.original.id} />}
           </div>
         );
       }
@@ -185,19 +230,10 @@ export const laureateColumns: ColumnDef<LaureateRow>[] = [
         return (
           <div className="flex items-center gap-1.5">
             {prizeBadges}
-            <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400">
+            <Badge variant="outline" className={statusToneClass("positive")}>
               Délibéré
             </Badge>
-            <form action={reopenManualReview.bind(null, row.original.id)}>
-              <Button
-                type="submit"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Revenir à non délibéré"
-              >
-                <RotateCcw aria-hidden="true" />
-              </Button>
-            </form>
+            {isAdmin && <ReopenManualReviewButton resultId={row.original.id} />}
           </div>
         );
       }
@@ -240,4 +276,5 @@ export const laureateColumns: ColumnDef<LaureateRow>[] = [
       </Button>
     ),
   },
-];
+  ];
+}

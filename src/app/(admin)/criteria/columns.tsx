@@ -3,18 +3,14 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
+import { typePrimeBadgeClass } from "@/lib/primes/prize-visuals";
+import { statusToneClass } from "@/lib/status-tones";
 import { CriterionEditDialog } from "./criterion-edit-dialog";
 
 const PRIZE_LABELS: Record<string, string> = {
   SPECIAL: "Prix Spécial",
   EXC: "Excellence",
   ENC: "Encouragement",
-};
-
-const PRIZE_BADGE_CLASSES: Record<string, string> = {
-  SPECIAL: "bg-violet-600/10 text-violet-700 dark:text-violet-400",
-  EXC: "bg-amber-600/10 text-amber-700 dark:text-amber-400",
-  ENC: "bg-teal-600/10 text-teal-700 dark:text-teal-400",
 };
 
 export interface CriterionRow {
@@ -61,7 +57,7 @@ export const criteriaColumns: ColumnDef<CriterionRow>[] = [
     cell: ({ row }) => (
       <Badge
         variant="secondary"
-        className={PRIZE_BADGE_CLASSES[row.original.prize_code]}
+        className={typePrimeBadgeClass(row.original.prize_code)}
       >
         {PRIZE_LABELS[row.original.prize_code] ?? row.original.prize_code}
       </Badge>
@@ -99,20 +95,14 @@ export const criteriaColumns: ColumnDef<CriterionRow>[] = [
       const c = row.original;
       if (c.requires_manual_review) {
         return (
-          <Badge
-            variant="outline"
-            className="border-amber-600/40 text-amber-700 dark:text-amber-400"
-          >
+          <Badge variant="outline" className={statusToneClass("pending")}>
             Vérification manuelle
           </Badge>
         );
       }
       if (c.auto_qualify) {
         return (
-          <Badge
-            variant="outline"
-            className="border-teal-600/40 text-teal-700 dark:text-teal-400"
-          >
+          <Badge variant="outline" className={statusToneClass("positive")}>
             Automatique
           </Badge>
         );

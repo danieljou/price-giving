@@ -4,6 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { formatMontant } from "@/lib/primes/format";
+import { statusToneClass } from "@/lib/status-tones";
 import { ArticleFormDialog } from "./article-form-dialog";
 
 export interface ArticleRow {
@@ -63,10 +64,7 @@ export const articleColumns: ColumnDef<ArticleRow>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Statut" />,
     cell: ({ row }) =>
       row.original.actif ? (
-        <Badge
-          variant="outline"
-          className="border-teal-600/40 text-teal-700 dark:text-teal-400"
-        >
+        <Badge variant="outline" className={statusToneClass("positive")}>
           Actif
         </Badge>
       ) : (

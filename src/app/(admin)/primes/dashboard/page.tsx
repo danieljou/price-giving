@@ -14,6 +14,7 @@ import { pickDefaultSchoolYear } from "@/lib/school-year";
 import { computeBeneficiaryCounts } from "@/lib/primes/beneficiaries";
 import { computeBudget, type BudgetLineInput } from "@/lib/primes/budget";
 import { formatMontant } from "@/lib/primes/format";
+import { kpiToneClass, type KpiTone } from "@/lib/kpi-tones";
 import {
   BudgetByCategorieChart,
   BudgetByNiveauChart,
@@ -24,15 +25,6 @@ import {
 interface PageProps {
   searchParams: Promise<{ session?: string }>;
 }
-
-const KPI_TONES = {
-  blue: "bg-blue-600/10 text-blue-700 dark:bg-blue-400/10 dark:text-blue-400",
-  amber: "bg-amber-600/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-400",
-  teal: "bg-teal-600/10 text-teal-700 dark:bg-teal-400/10 dark:text-teal-400",
-  violet: "bg-violet-600/10 text-violet-700 dark:bg-violet-400/10 dark:text-violet-400",
-  rose: "bg-rose-600/10 text-rose-700 dark:bg-rose-400/10 dark:text-rose-400",
-  slate: "bg-slate-600/10 text-slate-700 dark:bg-slate-400/10 dark:text-slate-400",
-} as const;
 
 function KpiCard({
   title,
@@ -45,12 +37,12 @@ function KpiCard({
   value: string;
   hint: string;
   icon: React.ComponentType<{ className?: string }>;
-  tone: keyof typeof KPI_TONES;
+  tone: KpiTone;
 }>) {
   return (
     <Card>
       <CardContent className="flex items-start gap-4">
-        <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${KPI_TONES[tone]}`}>
+        <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${kpiToneClass(tone)}`}>
           <Icon className="size-5" aria-hidden="true" />
         </div>
         <div className="min-w-0">

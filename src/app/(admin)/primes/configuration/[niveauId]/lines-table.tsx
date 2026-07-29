@@ -68,8 +68,13 @@ function LineRow({ line }: Readonly<{ line: CompositionLine }>) {
 
   return (
     <TableRow>
-      <TableCell>
-        <p className="font-medium text-foreground">{line.article_libelle}</p>
+      <TableCell className="max-w-45">
+        <p
+          className="truncate font-medium text-foreground"
+          title={line.article_libelle}
+        >
+          {line.article_libelle}
+        </p>
         <p className="font-mono text-[10px] text-muted-foreground">
           {line.article_code}
         </p>

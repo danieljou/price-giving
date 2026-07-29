@@ -9,6 +9,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
+import { kpiToneClass, type KpiTone } from "@/lib/kpi-tones";
 import {
   NiveauBarChart,
   PrizeBarChart,
@@ -42,15 +43,6 @@ function countBy<T>(items: T[], key: (item: T) => string): Map<string, number> {
   }
   return counts;
 }
-
-const KPI_TONES = {
-  blue: "bg-blue-600/10 text-blue-700 dark:bg-blue-400/10 dark:text-blue-400",
-  amber:
-    "bg-amber-600/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-400",
-  teal: "bg-teal-600/10 text-teal-700 dark:bg-teal-400/10 dark:text-teal-400",
-  violet:
-    "bg-violet-600/10 text-violet-700 dark:bg-violet-400/10 dark:text-violet-400",
-} as const;
 
 interface YoyDelta {
   text: string;
@@ -94,13 +86,13 @@ function KpiCard({
   hint: string;
   extra?: React.ReactNode;
   icon: React.ComponentType<{ className?: string }>;
-  tone: keyof typeof KPI_TONES;
+  tone: KpiTone;
 }>) {
   return (
     <Card>
       <CardContent className="flex items-start gap-4">
         <div
-          className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${KPI_TONES[tone]}`}
+          className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${kpiToneClass(tone)}`}
         >
           <Icon className="size-5" aria-hidden="true" />
         </div>

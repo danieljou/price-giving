@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { configCost } from "@/lib/primes/cost";
+import { AuditHistory } from "@/components/audit-history";
 import type { PickerArticle } from "./article-picker";
 import { NiveauEditorTabs, type TabData } from "./niveau-editor-tabs";
 import type { CompositionLine } from "./lines-table";
@@ -114,6 +115,13 @@ export default async function NiveauConfigurationPage({
       lines,
       cost,
       beneficiaries,
+      history:
+        lines.length > 0 ? (
+          <AuditHistory
+            entityType="prime_config"
+            entityId={lines.map((l) => l.id)}
+          />
+        ) : undefined,
     });
   }
 

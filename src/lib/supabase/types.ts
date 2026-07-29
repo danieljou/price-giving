@@ -2,6 +2,10 @@ export type Section = "francophone" | "anglophone";
 
 export type PrizeCode = "SPECIAL" | "EXC" | "ENC" | "EXC_PLUS";
 
+export type UserRole = "saisie" | "admin";
+
+export type AuditEntityType = "result" | "manual_review" | "prime_config" | "depense";
+
 /** Financial "type de prime" codes — seeded 1:1 with PrizeCode so beneficiary
  *  counts can be derived automatically from results.awarded_prizes, but the
  *  table itself stays editable (libellé/description) and open to new codes. */
@@ -321,8 +325,73 @@ export interface Database {
           },
         ];
       };
+      profiles: {
+        Row: {
+          id: string;
+          role: UserRole;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          role?: UserRole;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
+        Relationships: [];
+      };
+      audit_log: {
+        Row: {
+          id: string;
+          entity_type: AuditEntityType;
+          entity_id: string;
+          action: string;
+          actor_id: string | null;
+          actor_email: string | null;
+          before: unknown | null;
+          after: unknown | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          entity_type: AuditEntityType;
+          entity_id: string;
+          action: string;
+          actor_id?: string | null;
+          actor_email?: string | null;
+          before?: unknown | null;
+          after?: unknown | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["audit_log"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      is_admin: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      resolve_manual_review: {
+        Args: { p_result_id: string; p_prize_code: string | null };
+        Returns: undefined;
+      };
+      reopen_manual_review: {
+        Args: { p_result_id: string };
+        Returns: undefined;
+      };
+      log_audit: {
+        Args: {
+          p_entity_type: AuditEntityType;
+          p_entity_id: string;
+          p_action: string;
+          p_before: unknown;
+          p_after: unknown;
+        };
+        Returns: undefined;
+      };
+    };
   };
 }

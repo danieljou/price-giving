@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
+import { AuditHistory } from "@/components/audit-history";
 import { updateResult } from "../../actions";
 import { ResultForm } from "../../result-form";
 
@@ -63,6 +64,18 @@ export default async function EditResultPage({
               notes: result.notes ?? undefined,
             }}
             submitLabel="Mettre à jour"
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Historique</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AuditHistory
+            entityType={["result", "manual_review"]}
+            entityId={result.id}
           />
         </CardContent>
       </Card>

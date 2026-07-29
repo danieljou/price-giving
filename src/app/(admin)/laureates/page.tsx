@@ -5,8 +5,9 @@ import { DataTable } from "@/components/data-table";
 import { PageHeader } from "@/components/page-header";
 import { pickDefaultSchoolYear } from "@/lib/school-year";
 import type { Section } from "@/lib/supabase/types";
+import { isAdmin } from "@/lib/supabase/role";
 import { recomputeYear } from "../results/actions";
-import { laureateColumns, type LaureateRow } from "./columns";
+import { getLaureateColumns, type LaureateRow } from "./columns";
 import { ExportMenu } from "./export-menu";
 import { LaureatesFilters } from "./laureates-filters";
 import { StatsSheet } from "./stats-sheet";
@@ -54,6 +55,7 @@ export default async function LaureatesPage({
 }) {
   const filters = await searchParams;
   const supabase = await createClient();
+  const canDeliberate = await isAdmin();
 
   const { data: schoolYears } = await supabase
     .from("school_years")
@@ -173,7 +175,7 @@ export default async function LaureatesPage({
       <SummaryTable rows={rows} />
 
       <DataTable
-        columns={laureateColumns}
+        columns={getLaureateColumns(canDeliberate)}
         data={rows}
         emptyContent={
           <div className="flex flex-col items-center gap-2 py-12 text-center">

@@ -28,12 +28,16 @@ export async function addArticleLine(
   prixDefaut: number
 ): Promise<LineFormState> {
   const supabase = await createClient();
-  const { error } = await supabase.from("configuration_prime_articles").insert({
-    configuration_prime_id: configId,
-    article_id: articleId,
-    quantite: 1,
-    prix_session: prixDefaut,
-  });
+  const { data: created, error } = await supabase
+    .from("configuration_prime_articles")
+    .insert({
+      configuration_prime_id: configId,
+      article_id: articleId,
+      quantite: 1,
+      prix_session: prixDefaut,
+    })
+    .select()
+    .single();
 
   if (error) {
     return {
@@ -43,6 +47,14 @@ export async function addArticleLine(
           : "Erreur lors de l'ajout de l'article.",
     };
   }
+
+  await supabase.rpc("log_audit", {
+    p_entity_type: "prime_config",
+    p_entity_id: created.id,
+    p_action: "create",
+    p_before: null,
+    p_after: created,
+  });
 
   revalidateConfigPaths();
   return { success: true };
@@ -63,18 +75,34 @@ export async function updateArticleLine(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data: before } = await supabase
+    .from("configuration_prime_articles")
+    .select()
+    .eq("id", lineId)
+    .single();
+
+  const { data: updated, error } = await supabase
     .from("configuration_prime_articles")
     .update({
       quantite: parsed.data.quantite,
       prix_session: parsed.data.prix_session,
       observation: parsed.data.observation,
     })
-    .eq("id", lineId);
+    .eq("id", lineId)
+    .select()
+    .single();
 
   if (error) {
     return { error: "Erreur lors de la mise à jour de la ligne." };
   }
+
+  await supabase.rpc("log_audit", {
+    p_entity_type: "prime_config",
+    p_entity_id: lineId,
+    p_action: "update",
+    p_before: before ?? null,
+    p_after: updated,
+  });
 
   revalidateConfigPaths();
   return { success: true };
@@ -82,6 +110,12 @@ export async function updateArticleLine(
 
 export async function removeArticleLine(lineId: string): Promise<LineFormState> {
   const supabase = await createClient();
+  const { data: before } = await supabase
+    .from("configuration_prime_articles")
+    .select()
+    .eq("id", lineId)
+    .single();
+
   const { error } = await supabase
     .from("configuration_prime_articles")
     .delete()
@@ -90,6 +124,14 @@ export async function removeArticleLine(lineId: string): Promise<LineFormState> 
   if (error) {
     return { error: "Erreur lors de la suppression de la ligne." };
   }
+
+  await supabase.rpc("log_audit", {
+    p_entity_type: "prime_config",
+    p_entity_id: lineId,
+    p_action: "delete",
+    p_before: before ?? null,
+    p_after: null,
+  });
 
   revalidateConfigPaths();
   return { success: true };

@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/data-table";
 import { pickDefaultSchoolYear } from "@/lib/school-year";
 import { formatMontant } from "@/lib/primes/format";
+import { AuditHistory } from "@/components/audit-history";
 import { depenseColumns, type DepenseRow } from "./columns";
 import { DepenseFormDialog } from "./depense-form-dialog";
 
@@ -38,7 +39,10 @@ export default async function DepensesPage({ searchParams }: Readonly<PageProps>
       .select("id, libelle, categorie, description, montant, observation")
       .eq("session_id", sessionId)
       .order("categorie");
-    rows = data ?? [];
+    rows = (data ?? []).map((d) => ({
+      ...d,
+      history: <AuditHistory entityType="depense" entityId={d.id} />,
+    }));
   }
 
   const categories = [...new Set(rows.map((d) => d.categorie))].sort();
