@@ -1,15 +1,15 @@
 import { RefreshCw } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/data-table";
 import { PageHeader } from "@/components/page-header";
 import { pickDefaultSchoolYear } from "@/lib/school-year";
 import type { Section } from "@/lib/supabase/types";
 import { isAdmin } from "@/lib/supabase/role";
 import { recomputeYear } from "../results/actions";
-import { getLaureateColumns, type LaureateRow } from "./columns";
+import type { LaureateRow } from "./columns";
 import { ExportMenu } from "./export-menu";
 import { LaureatesFilters } from "./laureates-filters";
+import { LaureatesTable } from "./laureates-table";
 import { StatsSheet } from "./stats-sheet";
 import { SummaryTable } from "./summary-table";
 
@@ -174,20 +174,7 @@ export default async function LaureatesPage({
 
       <SummaryTable rows={rows} />
 
-      <DataTable
-        columns={getLaureateColumns(canDeliberate)}
-        data={rows}
-        emptyContent={
-          <div className="flex flex-col items-center gap-2 py-12 text-center">
-            <p className="text-sm font-medium text-foreground">
-              Aucun lauréat pour ces filtres
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Modifiez les filtres ou saisissez de nouveaux résultats.
-            </p>
-          </div>
-        }
-      />
+      <LaureatesTable rows={rows} canDeliberate={canDeliberate} />
     </div>
   );
 }
