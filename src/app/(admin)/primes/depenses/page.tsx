@@ -96,6 +96,8 @@ export default async function DepensesPage({ searchParams }: Readonly<PageProps>
             columns={depenseColumns}
             data={rows}
             pageSize={15}
+            searchKey="libelle"
+            searchPlaceholder="Rechercher une dépense..."
             filterFields={[
               {
                 columnId: "categorie",

@@ -22,13 +22,19 @@ import { ThemeToggle } from "./theme-toggle";
 
 interface AppSidebarProps {
   userEmail: string | null;
+  isAdmin: boolean;
   onLogout: () => Promise<void>;
 }
 
-export function AppSidebar({ userEmail, onLogout }: Readonly<AppSidebarProps>) {
+export function AppSidebar({
+  userEmail,
+  isAdmin,
+  onLogout,
+}: Readonly<AppSidebarProps>) {
   const pathname = usePathname();
 
   const initials = userEmail ? userEmail.slice(0, 2).toUpperCase() : "JV";
+  const navItems = ALL_NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin);
 
   return (
     <Sidebar collapsible="icon" variant="floating">
@@ -68,7 +74,7 @@ export function AppSidebar({ userEmail, onLogout }: Readonly<AppSidebarProps>) {
             </SidebarMenu>
             <SidebarSeparator className="my-2" />
             <SidebarMenu className="gap-1">
-              {ALL_NAV_ITEMS.map((item) => {
+              {navItems.map((item) => {
                 const isActive =
                   pathname === item.href ||
                   (item.href !== "/dashboard" &&

@@ -19,6 +19,8 @@ export function LaureatesTable({
     <DataTable
       columns={getLaureateColumns(canDeliberate)}
       data={rows}
+      searchKey="student_name"
+      searchPlaceholder="Rechercher un lauréat..."
       emptyContent={
         <div className="flex flex-col items-center gap-2 py-12 text-center">
           <p className="text-sm font-medium text-foreground">

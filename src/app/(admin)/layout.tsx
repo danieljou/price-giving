@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isAdmin as getIsAdmin } from "@/lib/supabase/role";
 import {
   SidebarProvider,
   SidebarInset,
@@ -22,6 +23,7 @@ export default async function AdminLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const isAdmin = await getIsAdmin();
 
   const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : "JV";
   // const _displayName = user?.email
@@ -30,7 +32,11 @@ export default async function AdminLayout({
 
   return (
     <SidebarProvider>
-      <AppSidebar userEmail={user?.email ?? null} onLogout={logout} />
+      <AppSidebar
+        userEmail={user?.email ?? null}
+        isAdmin={isAdmin}
+        onLogout={logout}
+      />
       <SidebarInset className="relative isolate overflow-x-hidden">
         {/* Hero banner — tall brand band, gradient derived from --primary
             (never a new color), sits behind the header row + greeting. */}

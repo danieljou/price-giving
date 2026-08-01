@@ -4,7 +4,7 @@ export type PrizeCode = "SPECIAL" | "EXC" | "ENC" | "EXC_PLUS";
 
 export type UserRole = "saisie" | "admin";
 
-export type AuditEntityType = "result" | "manual_review" | "prime_config" | "depense";
+export type AuditEntityType = "result" | "manual_review" | "prime_config" | "depense" | "user";
 
 /** Financial "type de prime" codes — seeded 1:1 with PrizeCode so beneficiary
  *  counts can be derived automatically from results.awarded_prizes, but the
@@ -375,7 +375,7 @@ export interface Database {
         Returns: boolean;
       };
       resolve_manual_review: {
-        Args: { p_result_id: string; p_prize_code: string | null };
+        Args: { p_result_id: string; p_prize_codes: string[] };
         Returns: undefined;
       };
       reopen_manual_review: {

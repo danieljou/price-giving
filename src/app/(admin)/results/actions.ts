@@ -225,8 +225,9 @@ export async function recomputeYear(schoolYearId: string) {
   revalidatePath("/review");
 }
 
-/** Marks a result as decided ("délibéré"): assigns the chosen prize (or none)
- *  and removes it from the manual-review queue. Frozen against recomputation
+/** Marks a result as decided ("délibéré"): assigns the chosen prizes (zero,
+ *  one, or several — e.g. EXC and ENC together) and removes it from the
+ *  manual-review queue. Frozen against recomputation
  *  until reopened — see updateResult/recomputeYear.
  *
  *  Goes through the resolve_manual_review RPC (not a direct .update()) so
@@ -234,12 +235,12 @@ export async function recomputeYear(schoolYearId: string) {
  *  see supabase/migrations/20260729020000_manual_review_rpc.sql. */
 export async function resolveManualReview(
   resultId: string,
-  prizeCode: PrizeCode | null
+  prizeCodes: PrizeCode[]
 ): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("resolve_manual_review", {
     p_result_id: resultId,
-    p_prize_code: prizeCode,
+    p_prize_codes: prizeCodes,
   });
 
   if (error) {

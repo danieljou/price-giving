@@ -1,34 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Gavel, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { resolveManualReview } from "../results/actions";
-import type { PrizeCode } from "@/lib/supabase/types";
-
-const PRIZE_LABELS: Record<PrizeCode, string> = {
-  SPECIAL: "Prix Spécial",
-  EXC: "Prix d'Excellence",
-  ENC: "Prix d'Encouragement",
-  EXC_PLUS: "Prix d'Excellence+",
-};
-
-const DELIBERATION_PRIZE_OPTIONS: PrizeCode[] = [
-  "SPECIAL",
-  "EXC",
-  "ENC",
-  "EXC_PLUS",
-];
+import { ManualReviewDialog } from "../results/manual-review-dialog";
 
 export interface ReviewRow {
   id: string;
@@ -97,31 +74,7 @@ export const reviewColumns: ColumnDef<ReviewRow>[] = [
             <Pencil aria-hidden="true" />
           </Link>
         </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Délibérer">
-              <Gavel aria-hidden="true" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Attribuer</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {DELIBERATION_PRIZE_OPTIONS.map((code) => (
-              <DropdownMenuItem
-                key={code}
-                onClick={() => void resolveManualReview(row.original.id, code)}
-              >
-                {PRIZE_LABELS[code]}
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => void resolveManualReview(row.original.id, null)}
-            >
-              Aucun prix
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <ManualReviewDialog resultId={row.original.id} />
       </div>
     ),
   },

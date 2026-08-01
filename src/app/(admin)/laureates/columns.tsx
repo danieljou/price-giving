@@ -2,43 +2,21 @@
 
 import { useTransition } from "react";
 import Link from "next/link";
-import { Gavel, Pencil, RotateCcw, StickyNote } from "lucide-react";
+import { Pencil, RotateCcw, StickyNote } from "lucide-react";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { reopenManualReview, resolveManualReview } from "../results/actions";
-import type { PrizeCode } from "@/lib/supabase/types";
+import { reopenManualReview } from "../results/actions";
+import { ManualReviewDialog, PRIZE_LABELS } from "../results/manual-review-dialog";
 import { typePrimeBadgeClass } from "@/lib/primes/prize-visuals";
 import { statusToneClass } from "@/lib/status-tones";
-
-const PRIZE_LABELS: Record<string, string> = {
-  SPECIAL: "Prix Spécial",
-  EXC: "Prix d'Excellence",
-  ENC: "Prix d'Encouragement",
-  EXC_PLUS: "Prix d'Excellence+",
-};
-
-const DELIBERATION_PRIZE_OPTIONS: PrizeCode[] = [
-  "SPECIAL",
-  "EXC",
-  "ENC",
-  "EXC_PLUS",
-];
 
 export interface LaureateRow {
   id: string;
@@ -64,47 +42,6 @@ export function classeDisplay(row: LaureateRow): string {
   return (
     row.classe_texte ??
     `${row.niveau_depart} → ${row.niveau_admission ?? "—"}`
-  );
-}
-
-function ResolveManualReviewMenu({
-  resultId,
-}: Readonly<{ resultId: string }>) {
-  const [isPending, startTransition] = useTransition();
-
-  function resolve(code: PrizeCode | null) {
-    startTransition(async () => {
-      const result = await resolveManualReview(resultId, code);
-      if (result.error) toast.error(result.error);
-    });
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Délibérer"
-          disabled={isPending}
-        >
-          <Gavel aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Attribuer</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {DELIBERATION_PRIZE_OPTIONS.map((code) => (
-          <DropdownMenuItem key={code} onClick={() => resolve(code)}>
-            {PRIZE_LABELS[code]}
-          </DropdownMenuItem>
-        ))}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => resolve(null)}>
-          Aucun prix
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 
@@ -221,7 +158,9 @@ export function getLaureateColumns(
             <Badge variant="outline" className={statusToneClass("pending")}>
               Décision à prendre
             </Badge>
-            {isAdmin && <ResolveManualReviewMenu resultId={row.original.id} />}
+            {isAdmin && (
+              <ManualReviewDialog resultId={row.original.id} size="icon-sm" />
+            )}
           </div>
         );
       }

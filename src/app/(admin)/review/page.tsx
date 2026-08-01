@@ -64,6 +64,8 @@ export default async function ReviewPage() {
       <DataTable
         columns={reviewColumns}
         data={rows}
+        searchKey="student_name"
+        searchPlaceholder="Rechercher un étudiant..."
         emptyContent={
           <div className="flex flex-col items-center gap-2 py-12 text-center">
             <p className="text-sm font-medium text-foreground">
