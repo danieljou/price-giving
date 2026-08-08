@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import { createAdminClient } from "@/lib/supabase/admin-client";
 import { isAdmin } from "@/lib/supabase/role";
 import { normalizePhone } from "@/app/login/schema";
 import { createUserSchema, setRoleSchema } from "./schema";
@@ -32,7 +32,7 @@ export async function createUser(
   }
 
   const phone = parsed.data.phone ? normalizePhone(parsed.data.phone) : undefined;
-  const service = createServiceClient();
+  const service = createAdminClient();
 
   const { data, error } = await service.auth.admin.createUser({
     email: parsed.data.email,
@@ -96,7 +96,7 @@ export async function setUserRole(
     return { error: "Rôle invalide." };
   }
 
-  const service = createServiceClient();
+  const service = createAdminClient();
   const { data: before } = await service
     .from("profiles")
     .select("role")
@@ -136,7 +136,7 @@ export async function deleteUser(userId: string): Promise<UserFormState> {
     return { error: "Vous ne pouvez pas supprimer votre propre compte." };
   }
 
-  const service = createServiceClient();
+  const service = createAdminClient();
   const { data: before } = await service.auth.admin.getUserById(userId);
 
   const { error } = await service.auth.admin.deleteUser(userId);

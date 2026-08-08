@@ -56,6 +56,54 @@ export async function createStudent(
   redirect(`/students/${data.id}`);
 }
 
+export async function updateStudent(
+  studentId: string,
+  formData: FormData
+): Promise<StudentFormState> {
+  const parsed = studentSchema.safeParse({
+    first_name: formData.get("first_name"),
+    last_name: formData.get("last_name"),
+    section: formData.get("section"),
+    date_of_birth: formData.get("date_of_birth") || undefined,
+  });
+
+  if (!parsed.success) {
+    return { error: "Champs invalides." };
+  }
+
+  const supabase = await createClient();
+
+  const { data: sameSection } = await supabase
+    .from("students")
+    .select("id, first_name, last_name, section")
+    .eq("section", parsed.data.section)
+    .neq("id", studentId);
+  const duplicate = findExistingStudent(parsed.data, sameSection ?? []);
+  if (duplicate) {
+    return {
+      error: `${duplicate.last_name} ${duplicate.first_name} existe déjà en section ${duplicate.section} — utilisez sa fiche existante plutôt que d'en modifier une autre vers ce nom.`,
+    };
+  }
+
+  const { error } = await supabase
+    .from("students")
+    .update({
+      first_name: parsed.data.first_name,
+      last_name: parsed.data.last_name,
+      section: parsed.data.section,
+      date_of_birth: parsed.data.date_of_birth || null,
+    })
+    .eq("id", studentId);
+
+  if (error) {
+    return { error: "Erreur lors de la mise à jour de l'étudiant." };
+  }
+
+  revalidatePath("/students");
+  revalidatePath(`/students/${studentId}`);
+  redirect(`/students/${studentId}`);
+}
+
 export interface QuickCreateStudentState {
   error?: string;
   student?: {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ClipboardPlus } from "lucide-react";
+import { ArrowLeft, ClipboardPlus, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -87,12 +87,20 @@ export default async function StudentDetailPage({
               </div>
             </div>
           </div>
-          <Button asChild>
-            <Link href={`/results/new?studentId=${student.id}`}>
-              <ClipboardPlus />
-              Saisir un résultat
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link href={`/students/${student.id}/edit`}>
+                <Pencil />
+                Modifier
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href={`/results/new?studentId=${student.id}`}>
+                <ClipboardPlus />
+                Saisir un résultat
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -13,7 +13,60 @@ const ACTION_LABELS: Record<string, string> = {
   delete: "Suppression",
   resolve: "Décision (délibéré)",
   reopen: "Réouverture",
+  set_role: "Changement de rôle",
 };
+
+/** Columns that are never meaningful to a human reading the audit trail —
+ *  applies across every entity type rather than a per-table allowlist. */
+function isNoiseField(key: string): boolean {
+  return key === "id" || key.endsWith("_at");
+}
+
+function formatFieldLabel(key: string): string {
+  const spaced = key.replaceAll("_", " ");
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+function formatValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "boolean") return value ? "Oui" : "Non";
+  if (Array.isArray(value)) return value.length ? value.join(", ") : "—";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+interface FieldChange {
+  key: string;
+  before: unknown;
+  after: unknown;
+}
+
+/** Odoo-style "tracked fields" diff: only the fields that actually changed
+ *  between before/after, never the full record. Returns nothing for a pure
+ *  create or delete (before or after is null) — those are self-explanatory
+ *  from the action label alone. */
+function diffFields(before: unknown, after: unknown): FieldChange[] {
+  if (
+    !before ||
+    !after ||
+    typeof before !== "object" ||
+    typeof after !== "object"
+  ) {
+    return [];
+  }
+  const b = before as Record<string, unknown>;
+  const a = after as Record<string, unknown>;
+  const keys = new Set([...Object.keys(b), ...Object.keys(a)]);
+
+  const changes: FieldChange[] = [];
+  for (const key of keys) {
+    if (isNoiseField(key)) continue;
+    if (JSON.stringify(b[key]) !== JSON.stringify(a[key])) {
+      changes.push({ key, before: b[key], after: a[key] });
+    }
+  }
+  return changes;
+}
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString("fr-FR", {
@@ -22,8 +75,10 @@ function formatDate(iso: string): string {
   });
 }
 
-/** Inline "qui / quand / avant → après" history for a record, shared across
- *  résultats, vérification manuelle, configuration des primes et dépenses.
+/** Inline "qui / quand / quoi" history for a record, shared across résultats,
+ *  vérification manuelle, configuration des primes, dépenses et utilisateurs.
+ *  Shows only the fields that changed (old value struck through, new value
+ *  after) instead of a raw JSON dump — never renders before/after as-is.
  *  Reads audit_log directly — entries are only ever written by the log_audit
  *  RPC (see supabase/migrations/20260729010000_audit_log.sql). */
 export async function AuditHistory({
@@ -54,43 +109,48 @@ export async function AuditHistory({
 
   return (
     <ul className="flex flex-col gap-2 text-sm">
-      {entries.map((entry) => (
-        <li
-          key={entry.id}
-          className="border-b border-border pb-2 last:border-0 last:pb-0"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="font-medium text-foreground">
-              {ACTION_LABELS[entry.action] ?? entry.action}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {entry.actor_email ?? "Utilisateur supprimé"} ·{" "}
-              {formatDate(entry.created_at)}
-            </span>
-          </div>
-          {Boolean(entry.before || entry.after) && (
-            <details className="mt-1 text-xs text-muted-foreground">
-              <summary className="cursor-pointer select-none hover:text-foreground">
-                Détails
-              </summary>
-              <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <div>
-                  <p className="font-medium">Avant</p>
-                  <pre className="mt-1 overflow-x-auto rounded-sm bg-muted p-2 whitespace-pre-wrap">
-                    {entry.before ? JSON.stringify(entry.before, null, 2) : "—"}
-                  </pre>
-                </div>
-                <div>
-                  <p className="font-medium">Après</p>
-                  <pre className="mt-1 overflow-x-auto rounded-sm bg-muted p-2 whitespace-pre-wrap">
-                    {entry.after ? JSON.stringify(entry.after, null, 2) : "—"}
-                  </pre>
-                </div>
-              </div>
-            </details>
-          )}
-        </li>
-      ))}
+      {entries.map((entry) => {
+        const changes = diffFields(entry.before, entry.after);
+        return (
+          <li
+            key={entry.id}
+            className="border-b border-border pb-2 last:border-0 last:pb-0"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-medium text-foreground">
+                {ACTION_LABELS[entry.action] ?? entry.action}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {entry.actor_email ?? "Utilisateur supprimé"} ·{" "}
+                {formatDate(entry.created_at)}
+              </span>
+            </div>
+            {changes.length > 0 && (
+              <ul className="mt-1.5 flex flex-col gap-1">
+                {changes.map((change) => (
+                  <li
+                    key={change.key}
+                    className="flex flex-wrap items-baseline gap-1.5 text-xs"
+                  >
+                    <span className="font-medium text-foreground">
+                      {formatFieldLabel(change.key)} :
+                    </span>
+                    <span className="text-muted-foreground line-through">
+                      {formatValue(change.before)}
+                    </span>
+                    <span className="text-muted-foreground" aria-hidden="true">
+                      →
+                    </span>
+                    <span className="text-foreground">
+                      {formatValue(change.after)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }
