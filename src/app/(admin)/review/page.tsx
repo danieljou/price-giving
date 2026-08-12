@@ -31,19 +31,17 @@ function one<T>(value: T | T[] | null): T | null {
 export default async function ReviewPage() {
   const supabase = await createClient();
 
-  // A result belongs here whenever a human still needs to decide something:
-  // either a criterion explicitly flagged manual review (manual_review_notes
-  // non-empty), or the student simply has no automatic prize at all yet
-  // (awarded_prizes empty) — previously only the first case surfaced, so a
-  // result matching no criterion at all (not close to any threshold, nothing
-  // flagged) never showed up anywhere for an admin to see and decide on.
+  // Only results with zero automatic prize belong here — a student who
+  // already got something automatically (even if a *different* prize on the
+  // same result is flagged for manual review) doesn't need to go through
+  // deliberation again.
   const { data } = await supabase
     .from("results")
     .select(
       "id, section, niveau_depart, niveau_admission, manual_review_notes, awarded_prizes, students(first_name, last_name), school_years(label)"
     )
     .eq("manual_review_resolved", false)
-    .or("manual_review_notes.neq.{},awarded_prizes.eq.{}");
+    .eq("awarded_prizes", []);
 
   const rows: ReviewRow[] = ((data ?? []) as unknown as ResultRow[]).map(
     (r) => {
