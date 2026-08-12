@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { DataTable } from "@/components/data-table";
 import { PageHeader } from "@/components/page-header";
+import type { PrizeCode } from "@/lib/supabase/types";
 import { reviewColumns, type ReviewRow } from "./columns";
 
 interface StudentRow {
@@ -18,6 +19,7 @@ interface ResultRow {
   niveau_depart: string;
   niveau_admission: string | null;
   manual_review_notes: string[];
+  awarded_prizes: string[];
   students: StudentRow | StudentRow[] | null;
   school_years: SchoolYearRow | SchoolYearRow[] | null;
 }
@@ -29,13 +31,19 @@ function one<T>(value: T | T[] | null): T | null {
 export default async function ReviewPage() {
   const supabase = await createClient();
 
+  // A result belongs here whenever a human still needs to decide something:
+  // either a criterion explicitly flagged manual review (manual_review_notes
+  // non-empty), or the student simply has no automatic prize at all yet
+  // (awarded_prizes empty) — previously only the first case surfaced, so a
+  // result matching no criterion at all (not close to any threshold, nothing
+  // flagged) never showed up anywhere for an admin to see and decide on.
   const { data } = await supabase
     .from("results")
     .select(
-      "id, section, niveau_depart, niveau_admission, manual_review_notes, students(first_name, last_name), school_years(label)"
+      "id, section, niveau_depart, niveau_admission, manual_review_notes, awarded_prizes, students(first_name, last_name), school_years(label)"
     )
-    .not("manual_review_notes", "eq", "{}")
-    .eq("manual_review_resolved", false);
+    .eq("manual_review_resolved", false)
+    .or("manual_review_notes.neq.{},awarded_prizes.eq.{}");
 
   const rows: ReviewRow[] = ((data ?? []) as unknown as ResultRow[]).map(
     (r) => {
@@ -51,6 +59,7 @@ export default async function ReviewPage() {
         niveau_depart: r.niveau_depart,
         niveau_admission: r.niveau_admission,
         notes: r.manual_review_notes,
+        awarded_prizes: r.awarded_prizes as PrizeCode[],
       };
     }
   );

@@ -97,9 +97,12 @@ export default async function LaureatesPage({
   }
   if (filters.niveau) query = query.eq("niveau_depart", filters.niveau);
   if (filters.prize === "PENDING") {
+    // Any unresolved result with no automatic prize belongs here, whether or
+    // not a criterion happened to leave an explicit manual_review_notes
+    // entry — a student matching no criterion at all still needs a human
+    // decision, not silence.
     query = query
       .eq("awarded_prizes", [])
-      .not("manual_review_notes", "eq", "{}")
       .eq("manual_review_resolved", false);
   } else if (filters.prize) {
     query = query.contains("awarded_prizes", [filters.prize]);
@@ -120,11 +123,8 @@ export default async function LaureatesPage({
         rang: r.rang,
         awarded_prizes: r.awarded_prizes,
         pending_review:
-          r.awarded_prizes.length === 0 &&
-          r.manual_review_notes.length > 0 &&
-          !r.manual_review_resolved,
-        deliberated:
-          r.manual_review_notes.length > 0 && r.manual_review_resolved,
+          r.awarded_prizes.length === 0 && !r.manual_review_resolved,
+        deliberated: r.manual_review_resolved,
         notes: r.notes,
         section: r.section,
         student_name: student

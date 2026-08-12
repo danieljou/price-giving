@@ -9,12 +9,18 @@ export const CYCLE_ORDER: readonly Cycle[] = [
   "Supérieur",
 ];
 
-/** Ordinal ceilings from NIVEAU_ORDER: 1=Maternelle, 2-7=Primaire, 8-14=Secondaire, 15=Supérieur. */
+/** Ordinal ceilings from NIVEAU_ORDER: 1-3=Maternelle (PS/MS/GS or PN/N1/N2),
+ *  4-9=Primaire, 10-16=Secondaire, 17+=Supérieur. Supérieur is intentionally
+ *  open-ended (Infinity) rather than a fixed max — it's the last cycle, and a
+ *  hardcoded ceiling here silently drops every rank added above it (this bit
+ *  a real synthesis undercount when university sub-levels were added and
+ *  maternelle was split into 3 tiers, both of which shifted every rank below
+ *  15 in NIVEAU_ORDER without this ceiling table being updated to match). */
 const CYCLE_CEILINGS: readonly { maxRank: number; cycle: Cycle }[] = [
-  { maxRank: 1, cycle: "Maternelle" },
-  { maxRank: 7, cycle: "Primaire" },
-  { maxRank: 14, cycle: "Secondaire" },
-  { maxRank: 15, cycle: "Supérieur" },
+  { maxRank: 3, cycle: "Maternelle" },
+  { maxRank: 9, cycle: "Primaire" },
+  { maxRank: 16, cycle: "Secondaire" },
+  { maxRank: Infinity, cycle: "Supérieur" },
 ];
 
 /** Maps a niveau code to its teaching cycle; unknown/unranked codes get null. */

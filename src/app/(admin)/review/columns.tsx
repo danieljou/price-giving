@@ -6,6 +6,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { ManualReviewDialog } from "../results/manual-review-dialog";
+import type { PrizeCode } from "@/lib/supabase/types";
 
 export interface ReviewRow {
   id: string;
@@ -15,6 +16,7 @@ export interface ReviewRow {
   niveau_depart: string;
   niveau_admission: string | null;
   notes: string[];
+  awarded_prizes: PrizeCode[];
 }
 
 export const reviewColumns: ColumnDef<ReviewRow>[] = [
@@ -55,13 +57,20 @@ export const reviewColumns: ColumnDef<ReviewRow>[] = [
   {
     id: "notes",
     header: "Condition à vérifier",
-    cell: ({ row }) => (
-      <ul className="list-disc space-y-0.5 pl-4 text-sm">
-        {row.original.notes.map((note) => (
-          <li key={note}>{note}</li>
-        ))}
-      </ul>
-    ),
+    cell: ({ row }) =>
+      row.original.notes.length > 0 ? (
+        <ul className="list-disc space-y-0.5 pl-4 text-sm">
+          {row.original.notes.map((note) => (
+            <li key={note}>{note}</li>
+          ))}
+        </ul>
+      ) : (
+        <span className="text-sm text-muted-foreground">
+          {row.original.awarded_prizes.length > 0
+            ? "—"
+            : "Aucun prix automatique — décision requise"}
+        </span>
+      ),
   },
   {
     id: "actions",
@@ -74,7 +83,10 @@ export const reviewColumns: ColumnDef<ReviewRow>[] = [
             <Pencil aria-hidden="true" />
           </Link>
         </Button>
-        <ManualReviewDialog resultId={row.original.id} />
+        <ManualReviewDialog
+          resultId={row.original.id}
+          awardedPrizes={row.original.awarded_prizes}
+        />
       </div>
     ),
   },

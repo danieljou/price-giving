@@ -17,6 +17,7 @@ import { reopenManualReview } from "../results/actions";
 import { ManualReviewDialog, PRIZE_LABELS } from "../results/manual-review-dialog";
 import { typePrimeBadgeClass } from "@/lib/primes/prize-visuals";
 import { statusToneClass } from "@/lib/status-tones";
+import type { PrizeCode } from "@/lib/supabase/types";
 
 export interface LaureateRow {
   id: string;
@@ -159,7 +160,11 @@ export function getLaureateColumns(
               Décision à prendre
             </Badge>
             {isAdmin && (
-              <ManualReviewDialog resultId={row.original.id} size="icon-sm" />
+              <ManualReviewDialog
+                resultId={row.original.id}
+                awardedPrizes={row.original.awarded_prizes as PrizeCode[]}
+                size="icon-sm"
+              />
             )}
           </div>
         );
