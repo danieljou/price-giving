@@ -41,7 +41,15 @@ export default async function ReviewPage() {
       "id, section, niveau_depart, niveau_admission, manual_review_notes, awarded_prizes, students(first_name, last_name), school_years(label)"
     )
     .eq("manual_review_resolved", false)
-    .eq("awarded_prizes", []);
+    // Must be the Postgres empty-array literal as a string, not a JS `[]` —
+    // supabase-js's .eq() stringifies the value via template interpolation
+    // (`eq.${value}`), and `[].toString()` is `""`, not `"{}"`, so passing a
+    // JS array here silently matched nothing and the queue always looked
+    // empty even when the laureates page (which filters client-side on the
+    // real array) showed pending rows. .filter() is used instead of .eq()
+    // because the generated Database types type the column as PrizeCode[]
+    // and reject a string literal even though it's what PostgREST needs.
+    .filter("awarded_prizes", "eq", "{}");
 
   const rows: ReviewRow[] = ((data ?? []) as unknown as ResultRow[]).map(
     (r) => {

@@ -97,12 +97,14 @@ export default async function LaureatesPage({
   }
   if (filters.niveau) query = query.eq("niveau_depart", filters.niveau);
   if (filters.prize === "PENDING") {
-    // Any unresolved result with no automatic prize belongs here, whether or
-    // not a criterion happened to leave an explicit manual_review_notes
-    // entry — a student matching no criterion at all still needs a human
-    // decision, not silence.
+    // .eq() can't be used for the empty-array match here: supabase-js
+    // stringifies the filter value via template interpolation, and
+    // `[].toString()` is `""` rather than the Postgres empty-array literal
+    // `{}` that PostgREST needs — it silently matched zero rows. .filter()
+    // takes the literal string directly (and skips the generated
+    // PrizeCode[]-typed overload that would otherwise reject it).
     query = query
-      .eq("awarded_prizes", [])
+      .filter("awarded_prizes", "eq", "{}")
       .eq("manual_review_resolved", false);
   } else if (filters.prize) {
     query = query.contains("awarded_prizes", [filters.prize]);
