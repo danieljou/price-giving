@@ -38,9 +38,15 @@ const PRIZE_LABELS: Record<string, string> = {
   EXC: "Prix d'Excellence",
   ENC: "Prix d'Encouragement",
   EXC_PLUS: "Prix d'Excellence+",
+  PENDING: "Prix à déterminer",
 };
 
 const PRIZE_ORDER = ["SPECIAL", "EXC", "ENC", "EXC_PLUS"];
+
+/** Pseudo prize code grouping every row with no awarded prize yet — whether
+ *  still pending manual review or simply not decided — so they still show up
+ *  on the printed list instead of silently disappearing from it. */
+const PENDING_CODE = "PENDING";
 
 /** One accent color per prize, shared by the PDF/Word section headers. */
 const PRIZE_COLORS: Record<
@@ -51,6 +57,7 @@ const PRIZE_COLORS: Record<
   EXC: { rgb: [217, 119, 6], hex: "D97706" },
   ENC: { rgb: [13, 148, 136], hex: "0D9488" },
   EXC_PLUS: { rgb: [30, 64, 175], hex: "1E40AF" },
+  PENDING: { rgb: [107, 114, 128], hex: "6B7280" },
 };
 
 const SEPARATOR_GRAY_RGB: [number, number, number] = [229, 231, 235];
@@ -82,6 +89,15 @@ interface ExportMenuProps {
 // real Unicode fonts so they keep the arrow untouched.
 function pdfSafe(text: string): string {
   return text.replaceAll("→", "->");
+}
+
+/** Prize column value: the awarded prize name(s), or the pending placeholder
+ *  when nothing has been decided yet — so the row still reads clearly on a
+ *  printed list instead of showing a blank cell. */
+function prizeCellValue(row: LaureateRow): string {
+  return row.awarded_prizes.length > 0
+    ? row.awarded_prizes.map((c) => PRIZE_LABELS[c] ?? c).join(", ")
+    : PRIZE_LABELS[PENDING_CODE];
 }
 
 function rowCells(row: LaureateRow, index: number): (string | number)[] {
@@ -117,6 +133,21 @@ function groupByPrize(rows: LaureateRow[]): [string, LaureateRow[]][] {
     code,
     rows.filter((r) => r.awarded_prizes.includes(code)).sort(ceremonySort),
   ]).filter(([, group]) => group.length > 0);
+}
+
+/** Same as {@link groupByPrize} but appends every row with no awarded prize
+ *  yet (not deliberated, or deliberated without a prize) as a final "Prix à
+ *  déterminer" group instead of dropping them — only used by the "liste
+ *  complète" PDF, which exists precisely to keep those students visible. */
+function groupByPrizeFull(rows: LaureateRow[]): [string, LaureateRow[]][] {
+  const groups = groupByPrize(rows);
+
+  const pending = rows
+    .filter((r) => r.awarded_prizes.length === 0)
+    .sort(ceremonySort);
+  if (pending.length > 0) groups.push([PENDING_CODE, pending]);
+
+  return groups;
 }
 
 type GroupItem =
@@ -177,12 +208,7 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
     const lines = [
       [...HEADERS, "Prix"].map(escape).join(";"),
       ...sorted.map((r, i) =>
-        [
-          ...rowCells(r, i),
-          r.awarded_prizes.map((c) => PRIZE_LABELS[c] ?? c).join(", "),
-        ]
-          .map(escape)
-          .join(";"),
+        [...rowCells(r, i), prizeCellValue(r)].map(escape).join(";"),
       ),
     ];
     // BOM so Excel opens the accented names correctly
@@ -218,7 +244,13 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
     XLSX.writeFile(workbook, `${baseFilename(scopeLabel)}.xlsx`);
   }
 
-  async function buildPdfDoc() {
+  /** `full: true` builds the "liste complète" variant: undecided results are
+   *  appended as a final "Prix à déterminer" section instead of being
+   *  dropped — the section heading alone conveys the prize, same as every
+   *  other group, so no separate Prix column is needed. A distinct document
+   *  from the standard export rather than a replacement for it, so both stay
+   *  available side by side. */
+  async function buildPdfDoc(full: boolean) {
     const [{ jsPDF }, autoTable] = await Promise.all([
       import("jspdf"),
       import("jspdf-autotable").then((m) => m.default),
@@ -230,17 +262,24 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
       (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable
         .finalY;
 
+    const groups = full ? groupByPrizeFull(rows) : groupByPrize(rows);
+
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
     doc.text("REMISE DES PRIX", pageWidth / 2, 18, { align: "center" });
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.text(`Liste des lauréats — ${scopeLabel}`, pageWidth / 2, 26, {
-      align: "center",
-    });
+    doc.text(
+      full
+        ? `Liste complète — ${scopeLabel}`
+        : `Liste des lauréats — ${scopeLabel}`,
+      pageWidth / 2,
+      26,
+      { align: "center" },
+    );
 
     let y = 36;
-    for (const [code, group] of groupByPrize(rows)) {
+    for (const [code, group] of groups) {
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
       doc.text(`${PRIZE_LABELS[code] ?? code} (${group.length})`, 14, y);
@@ -340,8 +379,16 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
   }
 
   async function exportPdf() {
-    const doc = await buildPdfDoc();
+    const doc = await buildPdfDoc(false);
     doc.save(`${baseFilename(scopeLabel)}.pdf`);
+  }
+
+  /** Separate document from {@link exportPdf}: also lists results with no
+   *  prize decided yet, under "Prix à déterminer" — for printing the full
+   *  roster instead of just the ceremony list. */
+  async function exportFullPdf() {
+    const doc = await buildPdfDoc(true);
+    doc.save(`${baseFilename(scopeLabel)}-complete.pdf`);
   }
 
   /**
@@ -662,6 +709,12 @@ export function ExportMenu({ rows, scopeLabel }: Readonly<ExportMenuProps>) {
           CSV (.csv)
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => void run("PDF complet", exportFullPdf)}
+        >
+          <FileText aria-hidden="true" />
+          Liste complète, avec prix à déterminer (.pdf)
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => void run("Étiquettes", exportLabels)}>
           <Tags aria-hidden="true" />
           Étiquettes (.pdf)

@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { DataTable } from "@/components/data-table";
 import { PageHeader } from "@/components/page-header";
+import { pickDefaultSchoolYear } from "@/lib/school-year";
 import type { PrizeCode } from "@/lib/supabase/types";
 import { reviewColumns, type ReviewRow } from "./columns";
+import { ReviewFilters } from "./review-filters";
 
 interface StudentRow {
   first_name: string;
@@ -18,6 +20,7 @@ interface ResultRow {
   section: string;
   niveau_depart: string;
   niveau_admission: string | null;
+  moyenne: number | null;
   manual_review_notes: string[];
   awarded_prizes: string[];
   students: StudentRow | StudentRow[] | null;
@@ -28,17 +31,35 @@ function one<T>(value: T | T[] | null): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
-export default async function ReviewPage() {
+export default async function ReviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ year?: string }>;
+}) {
+  const filters = await searchParams;
   const supabase = await createClient();
+
+  const { data: schoolYears } = await supabase
+    .from("school_years")
+    .select("id, label, start_year")
+    .order("start_year", { ascending: false });
+
+  // Default view: the current academic year (or the latest available), same
+  // as the laureates page — otherwise every stale pending item from past
+  // years piles up in the queue by default. "all" is the explicit opt-out
+  // carried in the URL.
+  const defaultYearId = pickDefaultSchoolYear(schoolYears ?? [])?.id;
+  const effectiveYear =
+    filters.year === "all" ? undefined : (filters.year ?? defaultYearId);
 
   // Only results with zero automatic prize belong here — a student who
   // already got something automatically (even if a *different* prize on the
   // same result is flagged for manual review) doesn't need to go through
   // deliberation again.
-  const { data } = await supabase
+  let query = supabase
     .from("results")
     .select(
-      "id, section, niveau_depart, niveau_admission, manual_review_notes, awarded_prizes, students(first_name, last_name), school_years(label)"
+      "id, section, niveau_depart, niveau_admission, moyenne, manual_review_notes, awarded_prizes, students(first_name, last_name), school_years(label)"
     )
     .eq("manual_review_resolved", false)
     // Must be the Postgres empty-array literal as a string, not a JS `[]` —
@@ -50,6 +71,10 @@ export default async function ReviewPage() {
     // because the generated Database types type the column as PrizeCode[]
     // and reject a string literal even though it's what PostgREST needs.
     .filter("awarded_prizes", "eq", "{}");
+
+  if (effectiveYear) query = query.eq("school_year_id", effectiveYear);
+
+  const { data } = await query;
 
   const rows: ReviewRow[] = ((data ?? []) as unknown as ResultRow[]).map(
     (r) => {
@@ -64,6 +89,7 @@ export default async function ReviewPage() {
         school_year_label: schoolYear?.label ?? "—",
         niveau_depart: r.niveau_depart,
         niveau_admission: r.niveau_admission,
+        moyenne: r.moyenne,
         notes: r.manual_review_notes,
         awarded_prizes: r.awarded_prizes as PrizeCode[],
       };
@@ -75,6 +101,11 @@ export default async function ReviewPage() {
       <PageHeader
         title="Vérification manuelle"
         description="Résultats dont le prix dépend d'une condition non automatisable (examen, concours...) — à trancher au cas par cas"
+      />
+      <ReviewFilters
+        schoolYears={schoolYears ?? []}
+        effectiveYear={effectiveYear}
+        filters={filters}
       />
       <DataTable
         columns={reviewColumns}

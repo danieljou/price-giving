@@ -15,6 +15,7 @@ export interface ReviewRow {
   school_year_label: string;
   niveau_depart: string;
   niveau_admission: string | null;
+  moyenne: number | null;
   notes: string[];
   awarded_prizes: PrizeCode[];
 }
@@ -51,6 +52,17 @@ export const reviewColumns: ColumnDef<ReviewRow>[] = [
       <span>
         {row.original.niveau_depart} →{" "}
         {row.original.niveau_admission ?? "—"}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "moyenne",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Moyenne" />
+    ),
+    cell: ({ row }) => (
+      <span className="font-mono">
+        {row.original.moyenne != null ? `${row.original.moyenne}/20` : "—"}
       </span>
     ),
   },
