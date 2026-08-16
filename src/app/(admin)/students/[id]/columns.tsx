@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, StickyNote, Trash2 } from "lucide-react";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { DataTableColumnHeader } from "@/components/data-table";
@@ -16,6 +16,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Tooltip,
@@ -45,6 +46,7 @@ export interface StudentResultRow {
 
 function DeleteResultButton({ resultId }: Readonly<{ resultId: string }>) {
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   function remove() {
@@ -56,25 +58,49 @@ function DeleteResultButton({ resultId }: Readonly<{ resultId: string }>) {
       }
 
       toast.success("Résultat supprimé.");
+      setOpen(false);
       router.refresh();
     });
   }
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      aria-label="Supprimer ce résultat"
-      onClick={remove}
-      disabled={isPending}
-      className="text-destructive hover:text-destructive"
-    >
-      {isPending ? (
-        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-      ) : (
-        <Trash2 className="h-4 w-4" aria-hidden="true" />
-      )}
-    </Button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Supprimer ce résultat"
+          disabled={isPending}
+          className="text-destructive hover:text-destructive"
+        >
+          {isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
+          )}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Supprimer le résultat</DialogTitle>
+          <DialogDescription>
+            Cette action supprimera définitivement ce résultat. Cette suppression
+            est irréversible.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Annuler
+          </Button>
+          <Button variant="destructive" onClick={remove} disabled={isPending}>
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : null}
+            Confirmer la suppression
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
