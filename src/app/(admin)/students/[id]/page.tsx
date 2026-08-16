@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/data-table";
+import { DeleteStudentButton } from "@/app/(admin)/students/student-delete-button";
 import { studentResultColumns, type StudentResultRow } from "./columns";
 
 export default async function StudentDetailPage({
@@ -94,6 +95,11 @@ export default async function StudentDetailPage({
                 Modifier
               </Link>
             </Button>
+            <DeleteStudentButton
+              studentId={student.id}
+              studentName={`${student.first_name} ${student.last_name}`}
+              hasResults={rows.length > 0}
+            />
             <Button asChild>
               <Link href={`/results/new?studentId=${student.id}`}>
                 <ClipboardPlus />

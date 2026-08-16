@@ -184,6 +184,24 @@ export async function updateResult(
   redirect(`/students/${parsed.studentId}`);
 }
 
+export async function deleteResult(
+  resultId: string
+): Promise<ResultFormState> {
+  const supabase = await createClient();
+
+  const { error } = await supabase.from("results").delete().eq("id", resultId);
+
+  if (error) {
+    return { error: "Erreur lors de la suppression du résultat." };
+  }
+
+  revalidatePath("/students");
+  revalidatePath("/laureates");
+  revalidatePath("/dashboard");
+
+  return {};
+}
+
 export async function recomputeYear(schoolYearId: string) {
   const supabase = await createClient();
   const { data: results } = await supabase

@@ -104,6 +104,38 @@ export async function updateStudent(
   redirect(`/students/${studentId}`);
 }
 
+export async function deleteStudent(
+  studentId: string
+): Promise<StudentFormState> {
+  const supabase = await createClient();
+
+  const { error: resultsError } = await supabase
+    .from("results")
+    .delete()
+    .eq("student_id", studentId);
+
+  if (resultsError) {
+    return {
+      error: "Erreur lors de la suppression des résultats de l'étudiant.",
+    };
+  }
+
+  const { error: studentError } = await supabase
+    .from("students")
+    .delete()
+    .eq("id", studentId);
+
+  if (studentError) {
+    return { error: "Erreur lors de la suppression de l'étudiant." };
+  }
+
+  revalidatePath("/students");
+  revalidatePath("/dashboard");
+  revalidatePath("/laureates");
+
+  return {};
+}
+
 export interface QuickCreateStudentState {
   error?: string;
   student?: {

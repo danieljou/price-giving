@@ -1,16 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { StickyNote } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Loader2, StickyNote, Trash2 } from "lucide-react";
+import { useTransition } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
 import { DataTableColumnHeader } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { deleteResult } from "@/app/(admin)/results/actions";
 
 const PRIZE_LABELS: Record<string, string> = {
   SPECIAL: "Prix Spécial",
@@ -29,6 +41,41 @@ export interface StudentResultRow {
   awarded_prizes: string[];
   notes: string | null;
   school_year_label: string;
+}
+
+function DeleteResultButton({ resultId }: Readonly<{ resultId: string }>) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  function remove() {
+    startTransition(async () => {
+      const result = await deleteResult(resultId);
+      if ("error" in result && result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success("Résultat supprimé.");
+      router.refresh();
+    });
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      aria-label="Supprimer ce résultat"
+      onClick={remove}
+      disabled={isPending}
+      className="text-destructive hover:text-destructive"
+    >
+      {isPending ? (
+        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+      ) : (
+        <Trash2 className="h-4 w-4" aria-hidden="true" />
+      )}
+    </Button>
+  );
 }
 
 export const studentResultColumns: ColumnDef<StudentResultRow>[] = [
@@ -107,9 +154,12 @@ export const studentResultColumns: ColumnDef<StudentResultRow>[] = [
     enableHiding: false,
     header: "",
     cell: ({ row }) => (
-      <Button variant="ghost" size="sm" asChild>
-        <Link href={`/results/${row.original.id}/edit`}>Modifier</Link>
-      </Button>
+      <div className="flex items-center justify-end gap-2">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href={`/results/${row.original.id}/edit`}>Modifier</Link>
+        </Button>
+        <DeleteResultButton resultId={row.original.id} />
+      </div>
     ),
   },
 ];
